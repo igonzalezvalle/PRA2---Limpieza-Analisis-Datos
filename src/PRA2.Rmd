@@ -44,6 +44,13 @@ library(ggplot2)
 library(data.table)
 library(agricolae)
 library(kableExtra)
+library(sampling)
+library(corrplot)
+library(leaflet)
+library(cluster)
+library(caret)
+#Para trabajar con fechas
+library(lubridate)
 ```
 <span style="color:darkblue"> <font size="20"> **Descripción** </font></span>
 
@@ -98,30 +105,6 @@ En cuanto a las variables del dataset, se tienen las siguientes:
 
 
 
-```{r}
-#Cargamos de inicio 
-library(knitr)
-library(stringr)
-library(psych)
-library(VIM)
-library(graphics)
-library(RColorBrewer)
-library(coin)
-library(ISLR)
-library(MASS)
-library(dplyr)
-library(pROC)
-library(faraway)
-library(kableExtra)
-library(ggplot2)
-library(data.table)
-library(agricolae)
-library(kableExtra)
-library(sampling)
-library(corrplot)
-library(leaflet)
-```
-
 
 ```{r,echo=TRUE,eval=TRUE}
 #Cargamos el dataset
@@ -161,7 +144,7 @@ colnames(airports) <- c("ORIGIN_CODE","ORIGIN_AIRPORT", "ORIGIN_CITY", "ORIGIN_S
 flight_airports <- left_join(vuelos_reduc,airports,by="ORIGIN_CODE")
 ```
 
-Como nuestro dataset es un subconjunto de los datos iniciales, puede que no estén todos los aeropuertos, por lo que tenemos que igualar los niveles de los dos campos tipo factor.
+Nos da error, porque como nuestro dataset es un subconjunto de los datos iniciales, puede que no estén todos los aeropuertos, por lo que tenemos que igualar los niveles de los dos campos tipo factor.
 ```{r,echo=TRUE,eval=TRUE}
 
 combined <- sort(union(levels(vuelos_reduc$ORIGIN_CODE), levels(airports$ORIGIN_CODE)))
@@ -216,7 +199,10 @@ De todas las variables cargadas, de momento nos vamos a quedar con las siguiente
 
 ```{r,echo=TRUE,eval=TRUE}
 
-vuelos_reduc <- select (vuelos_reduc, -"YEAR",-"TAIL_NUMBER",-"AIR_SYSTEM_DELAY",-"SECURITY_DELAY",-"AIRLINE_DELAY",-"LATE_AIRCRAFT_DELAY",-"WEATHER_DELAY", -"TAXI_OUT",-"TAXI_IN", -"WHEELS_OFF", -"WHEELS_ON", -"DIVERTED"-"CANCELLED", -"CANCELLATION_REASON")
+vuelos_reduc <- dplyr::select(vuelos_reduc, -"YEAR",-"TAIL_NUMBER",-"AIR_SYSTEM_DELAY",-"SECURITY_DELAY",
+                              -"AIRLINE_DELAY",-"LATE_AIRCRAFT_DELAY",-"WEATHER_DELAY",
+                              -"TAXI_OUT",-"TAXI_IN",-"WHEELS_OFF", -"WHEELS_ON",-"DIVERTED",
+                              -"CANCELLED",-"CANCELLATION_REASON")
 
 str(vuelos_reduc)
 
@@ -248,9 +234,9 @@ colSums(is.na(vuelos_reduc))
 De los valores nulos que hemos identificado, hacemos una revisión para conocer el motivo de esos valores. Comprobamos que en el caso de los valores nulos en las variables DEPARTURE_DELAY y ARRIVAL_DELAY, se trata de aquellos vuelos que han sido cancelados o desviados, por lo que, como nuestro estudio va a estar basado en los vuelos completados, eliminaremos todos estos valores nulos.
 ```{r,echo=TRUE,eval=TRUE}
 #Comprobamos los valores nulos de la columna DEPARTURE_DELAY y ARRIVAL_DELAY
-vuelos %>% filter(is.na(vuelos$DEPARTURE_DELAY))
+head(vuelos %>% filter(is.na(vuelos$DEPARTURE_DELAY)))
 
-vuelos %>% filter(is.na(vuelos$ARRIVAL_DELAY))
+head(vuelos %>% filter(is.na(vuelos$ARRIVAL_DELAY)))
 
 #De momento como lo que queremos es trabajar con los vuelos retrasados vamos a eliminar los valores nulos de 
 #estas variables
@@ -342,7 +328,7 @@ vuelos_reduc$ARRIVAL_HOUR=format(round(trunc(vuelos_reduc$ARRIVAL_TIME/100),digi
 vuelos_reduc$ARRIVAL_HOUR <- as.factor(vuelos_reduc$ARRIVAL_HOUR)
 head(vuelos_reduc$ARRIVAL_HOUR)
 
-table(vuelos_reduc$ARRIVAL_HOUR)
+table(vuelos_reduc$ARRIVAL_HOUR)%>% knitr::kable("html")  %>% kable_styling(position='center', font_size=12, fixed_thead=list(enabled=T))
 ```
   
 Creamos una nueva variables que identifique el retraso total, en base a la perdida o ganancia en el tiempo de llegada frente al tiempo de adelanto o retraso en la salida
@@ -377,7 +363,7 @@ shapiro.test(vuelos_reduc$DISTANCE[1:5000])
 shapiro.test(vuelos_reduc$RETRASO_TOTAL[1:5000])
 ```
   
-La prueba de Saphiro-Wilk, solo es posible para un máximo de 5000 registros, al reducir la cantidad,nos da como resultado que debemos rechazar la hipótesis nula, es decir, nos indicaría que las variables no siguen una distribución normal. Sin embargo, por el teorema central del límite, la distribución de la media de  cualquier muestra de datos se considera cada vez más normal según aumenta el tamaño de la misma y para  muestras superiores con N>30 se puede suponer normalidad, dado que podría aproximarse a una disribución normal.  
+La prueba de Saphiro-Wilk, solo es posible para un máximo de 5000 registros, por lo que hemos realizado la prueba con un subconjunto con esa cantidad, y nos da como resultado que debemos rechazar la hipótesis nula, es decir, nos indicaría que las variables no siguen una distribución normal. Sin embargo, por el teorema central del límite, la distribución de la media de  cualquier muestra de datos se considera cada vez más normal según aumenta el tamaño de la misma y para  muestras superiores con N>30 se puede suponer normalidad, dado que podría aproximarse a una disribución normal.  
 
 ```{r,echo=TRUE,eval=TRUE}
 
@@ -397,8 +383,9 @@ Aparentemenete, para esta variable, según el gráfico podríamos decir que la v
   
 Lo primero que vamos a hacer es comprobar la correlación entre algunas de las variables:
 ```{r,echo=TRUE,eval=TRUE}
-correlacion <- select(vuelos_reduc, "SCHEDULED_DEPARTURE", "DEPARTURE_TIME", "DEPARTURE_DELAY", 
-                      "AIR_TIME", "DISTANCE", "SCHEDULED_ARRIVAL", "ARRIVAL_TIME","ARRIVAL_DELAY", "RETRASO_TOTAL")
+correlacion <- dplyr::select(vuelos_reduc, "SCHEDULED_DEPARTURE", "DEPARTURE_TIME", "DEPARTURE_DELAY", 
+                      "AIR_TIME", "DISTANCE", "SCHEDULED_ARRIVAL", "ARRIVAL_TIME","ARRIVAL_DELAY",
+                      "RETRASO_TOTAL")
 
 corr.res<-cor(correlacion)
 corrplot(corr.res,method="circle")
@@ -435,37 +422,41 @@ oddsratio(tabla_retraso_dias, verbose = TRUE)
 oddsratio(tabla_retraso_dias, rev="columns", verbose = TRUE)
 ```
   
-El Odds Ratio nos indica que la razón entre la ocurrencia de retraso del vuelo frente a no retraso es 0,93 veces mayor en día laborable y de 1.074 veces superior en fin de semana. Identificamos que no es una diferencia muy pronunciada.  
+El Odds Ratio nos indica que la razón entre la ocurrencia de retraso del vuelo frente a no retraso es 0,93 veces mayor en día laborable y de 1.068 veces superior en fin de semana. Identificamos que no es una diferencia muy pronunciada.  
   
-Realizamos el modelo de regresión lineal simple en el que estudiaremos la realción entre el retraso del vuelo y las horas del día.  
+Realizamos el modelo de regresión lineal simple en el que estudiaremos la relación entre el retraso del vuelo en la llegada junto con la hora establecida 
 ```{r,echo=TRUE,eval=TRUE}
-#ggplot(vuelos_reduc, aes(x=SCHEDULED_DEPARTURE, y=DEPARTURE_DELAY)) +
-#  geom_point() +
-#  geom_smooth(method=lm , color="red", se=FALSE)
+ggplot(vuelos_reduc, aes(x=SCHEDULED_ARRIVAL, y=ARRIVAL_DELAY)) +
+  geom_point() +
+  geom_smooth(method=lm , color="red", se=FALSE)
 
 
-retraso_modelo1 <- lm(DEPARTURE_DELAY~SCHEDULED_DEPARTURE, vuelos_reduc)
+retraso_modelo1 <- lm(ARRIVAL_DELAY~SCHEDULED_ARRIVAL, vuelos_reduc)
 retraso_modelo1 
 summary(retraso_modelo1)
 ```
+  
+No conseguimos un buen modelo, seguramente porque no tenemos una dependencia lineal entre los valores.  
 
-
+Probamos a incluir en el modelo la variable distancia
 ```{r,echo=TRUE,eval=TRUE}
-retraso_modelo2 <- lm(DEPARTURE_DELAY~SCHEDULED_DEPARTURE + DISTANCE, vuelos_reduc)
+
+retraso_modelo2 <- lm(ARRIVAL_DELAY~SCHEDULED_ARRIVAL + DISTANCE, vuelos_reduc)
 retraso_modelo2 
 summary(retraso_modelo2)
 
-retraso_modelo3 <- lm(DEPARTURE_DELAY~SCHEDULED_DEPARTURE + DISTANCE + SCHEDULED_ARRIVAL, vuelos_reduc)
+retraso_modelo3 <- lm(ARRIVAL_DELAY~SCHEDULED_DEPARTURE + DISTANCE + SCHEDULED_ARRIVAL, vuelos_reduc)
 retraso_modelo3 
 summary(retraso_modelo3)
 
 #y=-4.216+0.006x1+0.0013x2+0.003x3
 ```
-
+*Revisar* Estos factores no tienen impacto o no están relacionados con el retraso.
   
 Modelos de regresión logística:  
-Utilizaremos el dataframe creada anteriormente para incluir las variables en el formato correcto para la regresión.  
+Utilizaremos el dataframe creada anteriormente para incluir las variables en el formato correcto para la regresión. ¿Está el retraso asociado a los vuelos de fin de semana y a la hora de salida?
 ```{r,echo=TRUE,eval=TRUE}
+
 retraso <- data.frame(retraso, DEPARTURE_HOUR=vuelos_reduc$DEPARTURE_HOUR)
 retraso$WEEKEND <- ifelse(retraso$RETRASO=="NO", 0, 1)
 retraso[1:2] <- lapply(retraso[1:2], as.factor)
@@ -490,22 +481,25 @@ retraso_glm3
 summary(retraso_glm3)
 
 #Realizamos una predicción de retraso con nuestro modelo, en el caso de un vuelo que salga a las 16horas y 
-#con una distancia de 1000km en el mes de junio
-newdata = data.frame(DEPARTURE_HOUR = "10", DISTANCE=1000, MONTH="6")
+#con una distancia de 1000 milas en el mes de junio
+newdata = data.frame(DEPARTURE_HOUR = "16" , DISTANCE=1000, MONTH=6)
 predict(retraso_glm3, newdata , type="response")
 
-newdata2 = data.frame(DEPARTURE_HOUR ="0", DISTANCE=1000, MONTH="6")
+newdata2 = data.frame(DEPARTURE_HOUR ="18", DISTANCE=1000, MONTH=6)
 predict(retraso_glm3, newdata2 , type="response")
 
 table(retraso$DEPARTURE_HOUR)
 #Incluimos la variables aeropuerto.
-retraso <- retraso[,-c(7)]
 retraso <- data.frame(retraso, ORIGIN_AIRPORT=vuelos_reduc$ORIGIN_CODE)
 
 # Para que los resultados estén acotados, elegimos los 10 aeropuertos con más tráfico:
-retraso$ORIGIN_AIRPORT <- ifelse (retraso$ORIGIN_AIRPORT %in% c("ATL","ORD","DFW","DEN","LAX","SFO","PHX","IAH","LAS","MSP"),retraso$AIRPORTS, "OTROS")
+retraso$ORIGIN_AIRPORT <- ifelse (retraso$ORIGIN_AIRPORT %in% 
+                            c("ATL","ORD","DFW","DEN","LAX","SFO","PHX","IAH","LAS","MSP"),
+                            retraso$ORIGIN_AIRPORT,
+                            "OTROS")
 str(retraso)
-retraso_glm4 <- glm(RETRASO~DEPARTURE_HOUR + DISTANCE + MONTH + ORIGIN_AIRPORT, data=retraso, family=binomial)
+retraso_glm4 <- glm(RETRASO~DEPARTURE_HOUR + DISTANCE + MONTH + ORIGIN_AIRPORT, data=retraso,
+                    family=binomial)
 retraso_glm4
 summary(retraso_glm4)
 
@@ -534,7 +528,7 @@ barplot(popular_airports[1:10], col = "blue", ylim = c(0,20000))
 
 dias_semana <- sort(table(vuelos_reduc$DAY_OF_WEEK), decreasing=TRUE)
 
-#dias_semana <- factor(dias_semana, levels=c(1,2,3,4,5,6,7), labels=c("Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"))
+
 barplot(dias_semana, col = "blue", ylim = c(0,50000))
 #Se comprueba que el tráfico diario en los días laborables es muy similar, viendose un cambio de tendencia en el fin de semana, en concreto en el sábado.
 
@@ -547,15 +541,18 @@ ggplot(vuelos_reduc, aes(x=DAY_OF_WEEK, fill=DAY_OF_WEEK )) +
   geom_bar( ) +
   scale_fill_hue(c = 40) 
 
+#Aerolíneas
 ggplot(vuelos_reduc, aes(x=AIRLINE, fill=AIRLINE )) + 
   geom_bar( ) +
   scale_fill_hue(c = 40)
 
+#Horas de salida de los vuelos
 ggplot(vuelos_reduc, aes(x=DEPARTURE_HOUR, fill=DEPARTURE_HOUR )) + 
   geom_bar( ) +
   scale_fill_hue(c = 20) +
   theme(legend.position="none") 
 
+#Horas de llegada
 ggplot(vuelos_reduc, aes(x=ARRIVAL_HOUR, fill=ARRIVAL_HOUR )) + 
   geom_bar( ) +
   scale_fill_hue(c = 20) +
