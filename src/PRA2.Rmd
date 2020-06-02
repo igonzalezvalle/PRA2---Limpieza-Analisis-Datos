@@ -71,37 +71,37 @@ El tipo de licencia de este dataset es: *CC0 1.0 Universal (CC0 1.0) Public Doma
 El conjunto de datos elegido contiene 31 variables y casi 6 millones de observaciones, por lo que de cara a la práctica reduciremos la cantidad de datos, intentando que la muestra a utilizar represente el conjunto de datos original lo más fielmente posible, para ello utilizaremos las técnicas de muestreo que se estudiaron en el módulo anterior.  
 Del mismo modo, eliminaremos aquellas variables que no aporten valor al estudio que vamos a realizar, reduciendo así la dimensionalidad del conjunto de datos.  
 En cuanto a las variables del dataset, se tienen las siguientes:  
-*YEAR: Año del vuelo (2015)  
-*MONTH: Mes del vuelo  
-*DAY: Día del vuelo  
-*DAY_OF_WEEK: Día de la semana, donde el día 1=lunes y el 7=Domingo  
-*AIRLINE: Código de la aerolínea  
-*FLIGHT_NUMBER: Número de vuelo  
-*TAIL_NUMBER: Número de identificación de la aeronave  
-*ORIGIN_AIRPORT: Aeropuerto Origen  
-*DESTINATION_AIRPORT: Aeropuerto Destino  
-*SCHEDULED_DEPARTURE: Hora programada de salida en formato hhmm (55 -> 00:55)  
-*DEPARTURE_TIME: Hora de salida del vuelo en formato hhmm  
-*DEPARTURE_DELAY: Diferencia en minutos entre la salida programada y la real ( valores negativos identifican salidas del vuelo con antelaión)  
-*TAXI_OUT: Tiempo de rodaje del avión desde que deja la puerta de embarque hasta despegue.  
-*WHEELS_OFF: Hora en la que el avión despega, momento en el que las ruedas del avión dejan de tocar el suelo  
-*SCHEDULED_TIME: Tiempo programado de vuelo.  
-*ELAPSED_TIME: Tiempo total de vuelo contado desde el momento que el avión se pone en marcha hasta que para completamente en destino, es decir contando el rodaje en el aeropuerto.  
-*AIR_TIME: Tiempo desde despegue hasta aterrizaje  
-*DISTANCE: Distancia en millas  
-*WHEELS_ON: Hora en la que el avión toca tierra.  
-*TAXI_IN: Tiempo de rodaje en el aeropuerto destino hasta que el avión para completamente.  
-*SCHEDULED_ARRIVAL: Hora programada de llegada en formato hhmm  
-*ARRIVAL_TIME: Hora de llegada real en formato hhmm    
-*ARRIVAL_DELAY: Diferencia en minutos entre la salida programada y la real  
-*DIVERTED: Vuelo desviado (0-No, 1-Sí)
-*CANCELLED: Vuelo Cancelado (0-No, 1-Sí)
-*CANCELLATION_REASON: Motivo de cancelación (A-Carrier, B-Weather, C-National Air System, D-Security)
-*AIR_SYSTEM_DELAY: Tiempo de retraso por el motivo indicado  
-*SECURITY_DELAY: Tiempo de retraso por el motivo indicado  
-*AIRLINE_DELAY: Tiempo de retraso por el motivo indicado  
-*LATE_AIRCRAFT_DELAY: Tiempo de retraso por el motivo indicado  
-*WEATHER_DELAY: Tiempo de retraso por el motivo indicado  
+* YEAR: Año del vuelo (2015)  
+* MONTH: Mes del vuelo  
+* DAY: Día del vuelo  
+* DAY_OF_WEEK: Día de la semana, donde el día 1=lunes y el 7=Domingo  
+* AIRLINE: Código de la aerolínea  
+* FLIGHT_NUMBER: Número de vuelo  
+* TAIL_NUMBER: Número de identificación de la aeronave  
+* ORIGIN_AIRPORT: Aeropuerto Origen  
+* DESTINATION_AIRPORT: Aeropuerto Destino  
+* SCHEDULED_DEPARTURE: Hora programada de salida en formato hhmm (55 -> 00:55)  
+* DEPARTURE_TIME: Hora de salida del vuelo en formato hhmm  
+* DEPARTURE_DELAY: Diferencia en minutos entre la salida programada y la real ( valores negativos identifican salidas del vuelo con antelaión)  
+* TAXI_OUT: Tiempo de rodaje del avión desde que deja la puerta de embarque hasta despegue.  
+* WHEELS_OFF: Hora en la que el avión despega, momento en el que las ruedas del avión dejan de tocar el suelo  
+* SCHEDULED_TIME: Tiempo programado de vuelo.  
+* ELAPSED_TIME: Tiempo total de vuelo contado desde el momento que el avión se pone en marcha hasta que para completamente en destino, es decir contando el rodaje en el aeropuerto.  
+* AIR_TIME: Tiempo desde despegue hasta aterrizaje  
+* DISTANCE: Distancia en millas  
+* WHEELS_ON: Hora en la que el avión toca tierra.  
+* TAXI_IN: Tiempo de rodaje en el aeropuerto destino hasta que el avión para completamente.  
+* SCHEDULED_ARRIVAL: Hora programada de llegada en formato hhmm  
+* ARRIVAL_TIME: Hora de llegada real en formato hhmm    
+* ARRIVAL_DELAY: Diferencia en minutos entre la salida programada y la real  
+* DIVERTED: Vuelo desviado (0-No, 1-Sí)
+* CANCELLED: Vuelo Cancelado (0-No, 1-Sí)
+* CANCELLATION_REASON: Motivo de cancelación (A-Carrier, B-Weather, C-National Air System, D-Security)
+* AIR_SYSTEM_DELAY: Tiempo de retraso por el motivo indicado  
+* SECURITY_DELAY: Tiempo de retraso por el motivo indicado  
+* AIRLINE_DELAY: Tiempo de retraso por el motivo indicado  
+* LATE_AIRCRAFT_DELAY: Tiempo de retraso por el motivo indicado  
+* WEATHER_DELAY: Tiempo de retraso por el motivo indicado    
 
 
 
@@ -173,7 +173,8 @@ vuelos[10:25] <- lapply(vuelos[10:25], as.numeric)
 vuelos[27:31] <- lapply(vuelos[27:31], as.numeric)
 res <- sapply(vuelos,class)
 tabla_datos <- data.frame(variables=names(res),clase=as.vector(res))
-tabla_datos %>% knitr::kable("html")  %>% kable_styling(position='center', font_size=12, fixed_thead=list(enabled=T))
+kable(tabla_datos, 
+      caption = "asignación de clase de objeto R a cada variable")
 
 str(vuelos)
 ```
@@ -231,20 +232,25 @@ colSums(is.na(vuelos_reduc))
 ```
 
   
-De los valores nulos que hemos identificado, hacemos una revisión para conocer el motivo de esos valores. Comprobamos que en el caso de los valores nulos en las variables DEPARTURE_DELAY y ARRIVAL_DELAY, se trata de aquellos vuelos que han sido cancelados o desviados, por lo que, como nuestro estudio va a estar basado en los vuelos completados, eliminaremos todos estos valores nulos.
+De los valores nulos que hemos identificado, hacemos una revisión para conocer el motivo de esos valores. Comprobamos que en el caso de los valores nulos en las variables DEPARTURE_DELAY y ARRIVAL_DELAY, se trata de aquellos vuelos que han sido cancelados o desviados, por lo que, como nuestro estudio va a estar basado en los vuelos completados, eliminaremos todos estos valores nulos.  
+  
+Comprobamos los valores nulos de la columna DEPARTURE_DELAY y ARRIVAL_DELAY:
 ```{r,echo=TRUE,eval=TRUE}
-#Comprobamos los valores nulos de la columna DEPARTURE_DELAY y ARRIVAL_DELAY
 head(vuelos %>% filter(is.na(vuelos$DEPARTURE_DELAY)))
 
 head(vuelos %>% filter(is.na(vuelos$ARRIVAL_DELAY)))
+```
+  
 
-#De momento como lo que queremos es trabajar con los vuelos retrasados vamos a eliminar los valores nulos de 
-#estas variables
+De momento como lo que queremos es trabajar con los vuelos retrasados vamos a eliminar los valores nulos de  estas variables
+```{r,echo=TRUE,eval=TRUE}
 vuelos_reduc <- vuelos_reduc[!is.na(vuelos_reduc$DEPARTURE_DELAY),]
 vuelos_reduc <- vuelos_reduc[!is.na(vuelos_reduc$ARRIVAL_DELAY),]
+```
+  
+Comprobamos que ya no quedan valores nulos:
+```{r,echo=TRUE,eval=TRUE}
 
-
-#Comprobamos que ya no quedan valores nulos
 colSums(is.na(vuelos_reduc))
 summary(vuelos_reduc)
 ```
@@ -276,28 +282,45 @@ Comprobamos que los valores de distancias y horas en base a los valores mínimos
 Vamos a identificar los posibles valores extermos que tenemos en las variables de tiempo y distancia. En base a los resultados decidiremos que acciones tomar con estas variables.
 
 ```{r,echo=TRUE,eval=TRUE}
-
 boxplot(vuelos_reduc$DEPARTURE_DELAY, main="DEPARTURE_DELAY") 
 table(vuelos_reduc$DEPARTURE_DELAY)
 table(boxplot.stats(vuelos_reduc$DEPARTURE_DELAY)$out)
+```
+  
+*<Insertar comentario>*
 
+
+```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$SCHEDULED_TIME, main="SCHEDULED_TIME") 
 table(vuelos_reduc$SCHEDULED_TIME)
+```
+  
+*<Insertar comentario>*  
 
+```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$AIR_TIME, main="AIR_TIME") 
 table(vuelos_reduc$AIR_TIME)
+```
+  
+*<Insertar comentario>*  
 
+```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$DISTANCE, main="DISTANCE") 
 table(boxplot.stats(vuelos_reduc$DISTANCE)$out)
+```
+  
+*<Insertar comentario>*  
 
-
+```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$ARRIVAL_DELAY, main="ARRIVAL_DELAY") 
 table(vuelos_reduc$ARRIVAL_DELAY)
 
 
 
 ```
-
+  
+*<Insertar comentario>*  
+  
 El conjunto de datos que estamos tratando tiene muchos valores muy dispersos, de momento no vamos a hacer nada con ellos, los mantendremos y en algunos casos concretos, si fuese necesario, realizaremos los filtrados correspondientes. 
 
 
@@ -307,11 +330,11 @@ El conjunto de datos que estamos tratando tiene muchos valores muy dispersos, de
   
 <h2><span style="color:blue"> 4.1 Selección de los grupos de datos  </span>></h2>
 
-**Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar)**
+**Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar)**  
+Para poder trabajar mejor con las variables de tiempo, y dado que no nos van a interesar en principio los minutos vamos a dejar solamente las horas para poder realizar ciertos análisis de este dato.
 
 ```{r,echo=TRUE,eval=TRUE}
-# Para poder trabajar mejor con las variables de tiempo, y dado que no nos van a interesar en principio los minutos
-# vamos a dejar solamente las horas para poder analizar mejor este dato.
+
 vuelos_reduc$SCHEDULED_DEPARTURE_HOUR=format(round(trunc(vuelos_reduc$SCHEDULED_DEPARTURE/100),digits=0), nsmall=0)
 vuelos_reduc$SCHEDULED_DEPARTURE_HOUR <- as.numeric(vuelos_reduc$SCHEDULED_DEPARTURE_HOUR)
 head(vuelos_reduc$SCHEDULED_DEPARTURE_HOUR)
@@ -345,15 +368,14 @@ vuelos_reduc %>%
   ggplot( aes(x=RETRASO_TOTAL)) +
   geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
 ```
-
+  
+*<Incluir comentario>*
 
 
 <h2><span style="color:blue"> 4.2 Comprobación de la normalidad y homogeneidad de la varianza</span></h2>  
-
-
+  
+Utilizaremos la prueba Shapiro-Wilk test para comprobar la normalidad de la muestra para los valores DEPARTURE_DELAY, ARRIVAL_DELAY y DISTANCE
 ```{r,echo=TRUE,eval=TRUE}
-#Vamos a comprobar la normalidad de la muestra para los valores DEPARTURE_DELAY, ARRIVAL_DELAY y DISTANCE
-# utilizando la prueba shapiro-Wilk test. 
 
 shapiro.test(vuelos_reduc$DEPARTURE_DELAY[1:5000])
 
@@ -372,9 +394,21 @@ hist(vuelos_reduc$RETRASO_TOTAL)
 
 ```
 
-Aparentemenete, para esta variable, según el gráfico podríamos decir que la variable sigue una distribución normal.
+Aparentemenete, para esta variable, según el gráfico podríamos decir que la variable sigue una distribución normal.  
+Vamos a intentar generar Q-QPlot para mostrar gráficamente si la muestra sigue una distribución normal.  
+```{r,echo=TRUE,eval=TRUE}
+par(mfrow=c(2,1))
+qqnorm(vuelos_reduc$RETRASO_TOTAL, pch = 1, frame = FALSE)
+qqline(vuelos_reduc$RETRASO_TOTAL, col = "steelblue", lwd = 2)
+boxplot(vuelos_reduc$RETRASO_TOTAL, horizontal=T)
+```
+  
+En el gráfico podemos ver que los valores de la variable no se pegan a la recta de hecho, están formando una especie de S, donde solo unos cuantos valores centrales se tienen alrededor de la recta. Esto nos está identificando que esta variable tiene una gran cantidad de valores extremos que hacen que tengamos que preguntarnos si la variable sigue una distribución normal.
 
-*Falta comprobar homogeneidad de la varianza, utilizar test de Filgner-Killeen*  
+
+
+*<Falta comprobar homogeneidad de la varianza, utilizar test de Filgner-Killeen>*  
+
 
 <h2><span style="color:blue"> 4.3 Aplicación de pruebas estadísticas</span>></h2>  
 
