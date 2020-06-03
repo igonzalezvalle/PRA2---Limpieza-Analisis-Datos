@@ -93,7 +93,7 @@ En cuanto a las variables del dataset, se tienen las siguientes:
 * TAXI_IN: Tiempo de rodaje en el aeropuerto destino hasta que el avión para completamente.  
 * SCHEDULED_ARRIVAL: Hora programada de llegada en formato hhmm  
 * ARRIVAL_TIME: Hora de llegada real en formato hhmm    
-* ARRIVAL_DELAY: Diferencia en minutos entre la salida programada y la real  
+* ARRIVAL_DELAY: Diferencia en minutos entre la llegada programada y la real  
 * DIVERTED: Vuelo desviado (0-No, 1-Sí)
 * CANCELLED: Vuelo Cancelado (0-No, 1-Sí)
 * CANCELLATION_REASON: Motivo de cancelación (A-Carrier, B-Weather, C-National Air System, D-Security)
@@ -281,13 +281,22 @@ Comprobamos que los valores de distancias y horas en base a los valores mínimos
   
 Vamos a identificar los posibles valores extermos que tenemos en las variables de tiempo y distancia. En base a los resultados decidiremos que acciones tomar con estas variables.
 
+Para ello vamos representar las variables con un diagrama de cajas y bigotes que nos mostrará visualmente dichas variables a través de sus cuartiles.
+
+Las lineas que salen de las cajas se conocen como "bigotes" e indican la variabilidad fuera de los cuartiles superior e inferior. Los valores extremos (outliers) se representarán como puntos individuales. Dentro de la caja, la línea que vemos nos muestra la mediana.
+
+
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$DEPARTURE_DELAY, main="DEPARTURE_DELAY") 
 table(vuelos_reduc$DEPARTURE_DELAY)
 table(boxplot.stats(vuelos_reduc$DEPARTURE_DELAY)$out)
 ```
   
-*<Insertar comentario>*
+En el diagrama de cajas para la variable DEPARTURE_DELAY podemos apreciar como la mayoría de los vuelos no se retrasan y por eso la caja y los bigotes toman valores de 0 (aprox). Por este motivo, todos los retrasos se consideran valores outliers y, dado que el propósito de esta variable es mostrar los retrasos en las salidas, no podemos eliminar estos valores ya que son los que le dan sentido a la variable. Por otro lado, observamos el amplio rango de valores outliers (retrasos) que hay, llegando a superar valores de 1500 minutos, aunque sí que es cierto que la mayoría se concentran entre los valores de <0 a 1000 minutos.
+
+En las tablas podemos observar con más detalle los valores que toma esta variable y, comprobamos la disparidad de los retrasos.
+
+Los valores negativos nos indican que los vuelos salieron antes de su hora programada en un primer momento.
 
 
 ```{r,echo=TRUE,eval=TRUE}
@@ -295,21 +304,27 @@ boxplot(vuelos_reduc$SCHEDULED_TIME, main="SCHEDULED_TIME")
 table(vuelos_reduc$SCHEDULED_TIME)
 ```
   
-*<Insertar comentario>*  
+En el caso de la variable SCHEDULED_TIME (tiempo programado de vuelo) sí podemos apreciar mejor la caja y los bigotes del diagrama.
+Vemos que todos los valores extremos se encuentran por encima del extremo superior por lo que todos nos indican que el tiempo programado de vuelo ha sido excedido.
+Al igual que ocurría con la variable anteriormente analizada, de esta variable nos interesan todos sus valores por lo que no podemos eliminar sus valores extremos ya que estaríamos desperdiciando información importante.
+
+En las tablas vemos con más detalles sus valores. 
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$AIR_TIME, main="AIR_TIME") 
 table(vuelos_reduc$AIR_TIME)
 ```
   
-*<Insertar comentario>*  
+Para la vairable AIR_TIME (tiempo desde el despegue hasta el aterrizaje) vemos que la mayoría de vuelos duran entre 50 y 150 minutos aproximadamente, llegando el extremo superior a prácticamente 300 minutos. A partir de este valor nos encontramos con los datos extremos llegando hasta prácticamente los 700 minutos en su valor máximo.
+Dado que los valores extremos representan valores reales de duraciones de vuelo no nos interesa quitar dichos valores de la muestra ya que no se deben a posibles errores y nos aportan información valiosa.
+En la tabla vemos de manera más detallada la información de dicha variable. 
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$DISTANCE, main="DISTANCE") 
 table(boxplot.stats(vuelos_reduc$DISTANCE)$out)
 ```
   
-*<Insertar comentario>*  
+Para la varialbe DISTANCE (distancia en millas) observamos que la mayor parte de los vuelos transcurren en distancias de hasta 1000 millas aproximadamente, llegando el extremo superior a las 2000 millas aproximadamente. A partir de las 2000 millas nos encontramos los valores outliers, concentrandose la mayor parte de ellos hasta las 3000 millas. Vuelos de entre 3000 millas hasta 5000 millas nos encontramos muy pocos como observamos tanto en el diagrama como en la tabla. 
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$ARRIVAL_DELAY, main="ARRIVAL_DELAY") 
@@ -319,9 +334,13 @@ table(vuelos_reduc$ARRIVAL_DELAY)
 
 ```
   
-*<Insertar comentario>*  
+Como era de esperar, el análisis de la variable ARRIVAL_DELAY (diferencia en minutos entre la llegada programada y la real) es muy similar al que vimos en la primera variable analizada (DEPARTURE_DELAY). 
+Como ya explicamos anterioremente, la mayoría de los vuelos no sufren retrasos por lo que tanto la caja como los bigotes toman valores cercanos a 0. A partir de ahí, todos los valores ouliers que podemos observar nos muestran los retrasos en la llegada de los vuelos (vemos que el vuelo con mayor retraso superó los 1500 minutos).
+No podemos eliminar dichos valores ya que son la esencia de esta variable.
+
+ 
   
-El conjunto de datos que estamos tratando tiene muchos valores muy dispersos, de momento no vamos a hacer nada con ellos, los mantendremos y en algunos casos concretos, si fuese necesario, realizaremos los filtrados correspondientes. 
+En resumen, el conjunto de datos que estamos tratando tiene muchos valores muy dispersos, de momento no vamos a hacer nada con ellos, los mantendremos y en algunos casos concretos, si fuese necesario, realizaremos los filtrados correspondientes.
 
 
 ******   
