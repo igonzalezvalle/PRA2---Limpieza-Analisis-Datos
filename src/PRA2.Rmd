@@ -1,0 +1,712 @@
+---
+title: "Práctica 2: Limpieza y análisis de datos"
+author: "Cristina Merino García de la Reina, Isabel González Valle"
+date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+output:
+  html_document:
+    highlight: default
+    number_sections: yes
+    theme: cosmo
+    toc: yes
+    toc_depth: 5
+    toc_float:
+      collapsed: true
+      smooth_scroll: true
+    includes:
+      in_header: PEC2-header.html
+  word_document: default
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+---
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load_libraries, include=FALSE}
+library(knitr)
+library(stringr)
+library(psych)
+library(VIM)
+library(graphics)
+library(RColorBrewer)
+library(coin)
+library(ISLR)
+library(MASS)
+library(dplyr)
+library(pROC)
+library(faraway)
+library(kableExtra)
+library(ggplot2)
+library(data.table)
+library(agricolae)
+library(kableExtra)
+library(sampling)
+library(corrplot)
+library(leaflet)
+library(cluster)
+library(caret)
+#Para trabajar con fechas
+library(lubridate)
+```
+<span style="color:darkblue"> <font size="20"> **Descripción** </font></span>
+
+<div style="text-align: justify">**El objetivo de esta actividad será el tratamiento de un dataset, que puede ser el creado en la práctica 1 o bien cualquier dataset libre disponible en Kaggle (https://www.kaggle.com).**
+
+**Siguiendo las principales etapas de un proyecto analítico, las diferentes tareas a realizar (y justificar) son las siguientes:**
+
+
+******  
+<h1><span style="color:darkblue"> **1. Descripción del dataset**  </span> </h1> 
+******  
+**¿Por qué es importante y qué pregunta/problema pretende responder?**  
+  
+Para esta práctica hemos buscado un dataset de los vuelos que fueron cancelados o que sufrieron retrasos en durante el año 2015 comunicados a través del Departamento de Estadísticas de Transportes de los Estados Unidos. Este conjunto de datos contiene la información correspondiente a los vuelos operados por las grandes compañías aéreas.  
+Poder conocer y tener una referencia del motivo de los vuelos cancelados o retrasados es interesante para las personas que deben usar este medio de transporte. Se pueden analizar diferentes problemáticas, como la relación entre los vuelos retrasados y los días de la semana, así como identificar cuál puede ser el mejor mes para viajar, que aeropuerto debemos evitar y por último, buscaremos identificar cuál es la mejor compañía para viajar. Intentaremos dar respuesta a algunas de estas preguntas durante esta práctica.  
+<https://www.kaggle.com/usdot/flight-delays>  
+El tipo de licencia de este dataset es: *CC0 1.0 Universal (CC0 1.0) Public Domain Dedication* . Por lo tanto es público y puede ser utilizado libremente para el trabajo que vamos a realizar.  
+El conjunto de datos elegido contiene 31 variables y casi 6 millones de observaciones, por lo que de cara a la práctica reduciremos la cantidad de datos, intentando que la muestra a utilizar represente el conjunto de datos original lo más fielmente posible, para ello utilizaremos las técnicas de muestreo que se estudiaron en el módulo anterior.  
+Del mismo modo, eliminaremos aquellas variables que no aporten valor al estudio que vamos a realizar, reduciendo así la dimensionalidad del conjunto de datos.  
+En cuanto a las variables del dataset, se tienen las siguientes:  
+* YEAR: Año del vuelo (2015)  
+* MONTH: Mes del vuelo  
+* DAY: Día del vuelo  
+* DAY_OF_WEEK: Día de la semana, donde el día 1=lunes y el 7=Domingo  
+* AIRLINE: Código de la aerolínea  
+* FLIGHT_NUMBER: Número de vuelo  
+* TAIL_NUMBER: Número de identificación de la aeronave  
+* ORIGIN_AIRPORT: Aeropuerto Origen  
+* DESTINATION_AIRPORT: Aeropuerto Destino  
+* SCHEDULED_DEPARTURE: Hora programada de salida en formato hhmm (55 -> 00:55)  
+* DEPARTURE_TIME: Hora de salida del vuelo en formato hhmm  
+* DEPARTURE_DELAY: Diferencia en minutos entre la salida programada y la real ( valores negativos identifican salidas del vuelo con antelaión)  
+* TAXI_OUT: Tiempo de rodaje del avión desde que deja la puerta de embarque hasta despegue.  
+* WHEELS_OFF: Hora en la que el avión despega, momento en el que las ruedas del avión dejan de tocar el suelo  
+* SCHEDULED_TIME: Tiempo programado de vuelo.  
+* ELAPSED_TIME: Tiempo total de vuelo contado desde el momento que el avión se pone en marcha hasta que para completamente en destino, es decir contando el rodaje en el aeropuerto.  
+* AIR_TIME: Tiempo desde despegue hasta aterrizaje  
+* DISTANCE: Distancia en millas  
+* WHEELS_ON: Hora en la que el avión toca tierra.  
+* TAXI_IN: Tiempo de rodaje en el aeropuerto destino hasta que el avión para completamente.  
+* SCHEDULED_ARRIVAL: Hora programada de llegada en formato hhmm  
+* ARRIVAL_TIME: Hora de llegada real en formato hhmm    
+* ARRIVAL_DELAY: Diferencia en minutos entre la salida programada y la real  
+* DIVERTED: Vuelo desviado (0-No, 1-Sí)
+* CANCELLED: Vuelo Cancelado (0-No, 1-Sí)
+* CANCELLATION_REASON: Motivo de cancelación (A-Carrier, B-Weather, C-National Air System, D-Security)
+* AIR_SYSTEM_DELAY: Tiempo de retraso por el motivo indicado  
+* SECURITY_DELAY: Tiempo de retraso por el motivo indicado  
+* AIRLINE_DELAY: Tiempo de retraso por el motivo indicado  
+* LATE_AIRCRAFT_DELAY: Tiempo de retraso por el motivo indicado  
+* WEATHER_DELAY: Tiempo de retraso por el motivo indicado    
+
+
+
+
+```{r,echo=TRUE,eval=TRUE}
+#Cargamos el dataset
+vuelos <- read.csv("flights.csv", sep=c(","), header = TRUE)
+
+head(vuelos)
+
+```
+  
+Este conjunto de datos tiene un tamaño demasiado grande para algunas de las operaciones que necesitamos hacer y por este motivo hemos decidido realizar la práctica con un subconjunto del mismo. En el caso necesario, todos los cálculos se podrían repetir con el conjunto completo.
+
+```{r,echo=TRUE,eval=TRUE}
+#Reducción de la cantidad
+set.seed(222)
+index <- sample(1:nrow(vuelos), size=0.05*nrow(vuelos))
+vuelos_reduc <- vuelos[index,]
+str(vuelos_reduc)
+summary(vuelos_reduc)
+
+length(vuelos_reduc$YEAR)
+```
+
+ 
+
+******   
+<h1><span style="color:darkblue"> **2. Integración y selección de los datos de interés a analizar**</span></h1>  
+******   
+Vamos a cargar los datos de localización de los aeropuertos y haremos un merge de los datos de los aeropuertos con el dataset que tenemos para, entre otras cosas, hacer una visualización en un mapa.  
+Renombramos las columnas para dejar la misma nomenclatura en aquellas que queremos unir
+
+```{r,echo=TRUE,eval=TRUE}
+airports <- read.csv("datasets_810_1496_airports.csv", header=TRUE)
+head(airports)
+colnames(vuelos_reduc)[8]  <- "ORIGIN_CODE"
+colnames(airports) <- c("ORIGIN_CODE","ORIGIN_AIRPORT", "ORIGIN_CITY", "ORIGIN_STATE", "ORIGIN_COUNTRY", "ORIGIN_LATITUDE", "ORIGIN_LONGITUDE" )
+
+flight_airports <- left_join(vuelos_reduc,airports,by="ORIGIN_CODE")
+```
+
+Nos da error, porque como nuestro dataset es un subconjunto de los datos iniciales, puede que no estén todos los aeropuertos, por lo que tenemos que igualar los niveles de los dos campos tipo factor.
+```{r,echo=TRUE,eval=TRUE}
+
+combined <- sort(union(levels(vuelos_reduc$ORIGIN_CODE), levels(airports$ORIGIN_CODE)))
+flight_airports <- left_join(mutate(vuelos_reduc, ORIGIN_CODE=factor(ORIGIN_CODE, levels=combined)),
+                             mutate(airports, ORIGIN_CODE=factor(ORIGIN_CODE, levels=combined)))
+
+#visualización del volumen de vuelos de cada aeropuerto
+longitude <- unique(flight_airports$ORIGIN_LONGITUDE)
+latitude <- unique(flight_airports$ORIGIN_LATITUDE)
+df = data.frame(Lat = latitude, Long = longitude)
+leaflet(df) %>% addTiles() %>% addCircleMarkers() #map visualization
+
+
+```
+
+A partir de aquí, vamos a identificar los tipos de variables y a quedarnos con los datos que nos interesarán para realizar nuestro estudio.  
+```{r,echo=TRUE,eval=TRUE}
+
+res <- sapply(vuelos_reduc,class)
+kable(data.frame(variables=names(res),clase=as.vector(res)), 
+      caption = "asignación de clase de objeto R a cada variable")
+
+vuelos[1:4] <- lapply(vuelos[1:4], as.numeric)
+vuelos[6] <- lapply(vuelos[6], as.numeric)
+vuelos[10:25] <- lapply(vuelos[10:25], as.numeric)
+vuelos[27:31] <- lapply(vuelos[27:31], as.numeric)
+res <- sapply(vuelos,class)
+tabla_datos <- data.frame(variables=names(res),clase=as.vector(res))
+kable(tabla_datos, 
+      caption = "asignación de clase de objeto R a cada variable")
+
+str(vuelos)
+```
+  
+De todas las variables cargadas, de momento nos vamos a quedar con las siguientes:  
+*MONTH  
+*DAY  
+*DAY_OF_WEEK    
+*AIRLINE   
+*ORIGIN_CODE    
+*DESTINATION_AIRPORT    
+*SCHEDULED_DEPARTURE    
+*DEPARTURE_TIME   
+*DEPARTURE_DELAY    
+*SCHEDULED_TIME    
+*ELAPSED_TIME   
+*AIR_TIME   
+*DISTANCE   
+*SCHEDULED_ARRIVAL   
+*ARRIVAL_TIME     
+*ARRIVAL_DELAY   
+  
+
+```{r,echo=TRUE,eval=TRUE}
+
+vuelos_reduc <- dplyr::select(vuelos_reduc, -"YEAR",-"TAIL_NUMBER",-"AIR_SYSTEM_DELAY",-"SECURITY_DELAY",
+                              -"AIRLINE_DELAY",-"LATE_AIRCRAFT_DELAY",-"WEATHER_DELAY",
+                              -"TAXI_OUT",-"TAXI_IN",-"WHEELS_OFF", -"WHEELS_ON",-"DIVERTED",
+                              -"CANCELLED",-"CANCELLATION_REASON")
+
+str(vuelos_reduc)
+
+
+
+```
+
+
+
+******   
+<h1><span style="color:darkblue"> **3. Limpieza de los datos**</span></h1>  
+******   
+
+<h2><span style="color:blue"> 3.1 Elementos vacíos</span></h2>
+
+**¿Los datos contienen ceros o elementos vacíos? ¿Cómo gestionarías cada uno de estos casos?**  
+  
+En este apartado, vamos a comprobar los valores que contienen nuestras variables para detectar si hay errores en los mismo, si tenemos elementos vacios o ceros o si hay datos fuera de los valores esperados, por ejemplo en las horas, días o meses.
+
+
+```{r,echo=TRUE,eval=TRUE}
+#Comprobamos valore nulos o valores perdidos
+sapply(vuelos_reduc, function(x) sum(is.na(x)))
+#Otra forma de sacar los valores nulos
+colSums(is.na(vuelos_reduc))
+```
+
+  
+De los valores nulos que hemos identificado, hacemos una revisión para conocer el motivo de esos valores. Comprobamos que en el caso de los valores nulos en las variables DEPARTURE_DELAY y ARRIVAL_DELAY, se trata de aquellos vuelos que han sido cancelados o desviados, por lo que, como nuestro estudio va a estar basado en los vuelos completados, eliminaremos todos estos valores nulos.  
+  
+Comprobamos los valores nulos de la columna DEPARTURE_DELAY y ARRIVAL_DELAY:
+```{r,echo=TRUE,eval=TRUE}
+head(vuelos %>% filter(is.na(vuelos$DEPARTURE_DELAY)))
+
+head(vuelos %>% filter(is.na(vuelos$ARRIVAL_DELAY)))
+```
+  
+
+De momento como lo que queremos es trabajar con los vuelos retrasados vamos a eliminar los valores nulos de  estas variables
+```{r,echo=TRUE,eval=TRUE}
+vuelos_reduc <- vuelos_reduc[!is.na(vuelos_reduc$DEPARTURE_DELAY),]
+vuelos_reduc <- vuelos_reduc[!is.na(vuelos_reduc$ARRIVAL_DELAY),]
+```
+  
+Comprobamos que ya no quedan valores nulos:
+```{r,echo=TRUE,eval=TRUE}
+
+colSums(is.na(vuelos_reduc))
+summary(vuelos_reduc)
+```
+  
+Comprobamos los datos de meses y días, por ver que no hay valores extraños. También revisaremos que no hay distancias ni tiempos horarios negativos.
+
+```{r,echo=TRUE,eval=TRUE}
+#Comprobamos si hay valores extraños en las variables día, día de la semana y mes
+month_wrong <- which(vuelos_reduc$MONTH > 12 | vuelos_reduc$MONTH < 1)
+month_wrong
+
+day_wrong <- which(vuelos_reduc$DAY > 31 | vuelos_reduc$DAY < 1)
+day_wrong
+
+day_week_wrong <- which(vuelos_reduc$DAY_OF_WEEK > 7 | vuelos_reduc$DAY_OF_WEEK <1)
+day_week_wrong
+
+str(vuelos_reduc)
+
+
+```
+  
+Comprobamos que los valores de distancias y horas en base a los valores mínimos y máximos son correctos. En el caso de los aeropuertos, conocemos que hay aeropuertos que tienen diferente nomenclatura para un mismo aeropuerto, de momento no vamos a realizar ninguna modificación sobre este dato, supondremos que son aeropuertos diferentes.
+
+
+
+<h2><span style="color:blue"> 3.2 Identificación y tratamiento de valores extremos</span></h2>
+  
+Vamos a identificar los posibles valores extermos que tenemos en las variables de tiempo y distancia. En base a los resultados decidiremos que acciones tomar con estas variables.
+
+```{r,echo=TRUE,eval=TRUE}
+boxplot(vuelos_reduc$DEPARTURE_DELAY, main="DEPARTURE_DELAY") 
+table(vuelos_reduc$DEPARTURE_DELAY)
+table(boxplot.stats(vuelos_reduc$DEPARTURE_DELAY)$out)
+```
+  
+*<Insertar comentario>*
+
+
+```{r,echo=TRUE,eval=TRUE}
+boxplot(vuelos_reduc$SCHEDULED_TIME, main="SCHEDULED_TIME") 
+table(vuelos_reduc$SCHEDULED_TIME)
+```
+  
+*<Insertar comentario>*  
+
+```{r,echo=TRUE,eval=TRUE}
+boxplot(vuelos_reduc$AIR_TIME, main="AIR_TIME") 
+table(vuelos_reduc$AIR_TIME)
+```
+  
+*<Insertar comentario>*  
+
+```{r,echo=TRUE,eval=TRUE}
+boxplot(vuelos_reduc$DISTANCE, main="DISTANCE") 
+table(boxplot.stats(vuelos_reduc$DISTANCE)$out)
+```
+  
+*<Insertar comentario>*  
+
+```{r,echo=TRUE,eval=TRUE}
+boxplot(vuelos_reduc$ARRIVAL_DELAY, main="ARRIVAL_DELAY") 
+table(vuelos_reduc$ARRIVAL_DELAY)
+
+
+
+```
+  
+*<Insertar comentario>*  
+  
+El conjunto de datos que estamos tratando tiene muchos valores muy dispersos, de momento no vamos a hacer nada con ellos, los mantendremos y en algunos casos concretos, si fuese necesario, realizaremos los filtrados correspondientes. 
+
+
+******   
+<h1><span style="color:darkblue"> **4. Análisis de los datos**  </span></h1>  
+******   
+  
+<h2><span style="color:blue"> 4.1 Selección de los grupos de datos  </span>></h2>
+
+**Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar)**  
+Para poder trabajar mejor con las variables de tiempo, y dado que no nos van a interesar en principio los minutos vamos a dejar solamente las horas para poder realizar ciertos análisis de este dato.
+
+```{r,echo=TRUE,eval=TRUE}
+
+vuelos_reduc$SCHEDULED_DEPARTURE_HOUR=format(round(trunc(vuelos_reduc$SCHEDULED_DEPARTURE/100),digits=0), nsmall=0)
+vuelos_reduc$SCHEDULED_DEPARTURE_HOUR <- as.numeric(vuelos_reduc$SCHEDULED_DEPARTURE_HOUR)
+head(vuelos_reduc$SCHEDULED_DEPARTURE_HOUR)
+
+table(vuelos_reduc$SCHEDULED_DEPARTURE_HOUR)
+
+vuelos_reduc$DEPARTURE_HOUR=format(round(trunc(vuelos_reduc$DEPARTURE_TIME/100),digits=0), nsmall=0)
+vuelos_reduc$DEPARTURE_HOUR <- as.factor(vuelos_reduc$DEPARTURE_HOUR)
+head(vuelos_reduc$DEPARTURE_HOUR)
+
+table(vuelos_reduc$DEPARTURE_HOUR)
+
+vuelos_reduc$ARRIVAL_HOUR=format(round(trunc(vuelos_reduc$ARRIVAL_TIME/100),digits=0), nsmall=0)
+vuelos_reduc$ARRIVAL_HOUR <- as.factor(vuelos_reduc$ARRIVAL_HOUR)
+head(vuelos_reduc$ARRIVAL_HOUR)
+
+table(vuelos_reduc$ARRIVAL_HOUR)%>% knitr::kable("html")  %>% kable_styling(position='center', font_size=12, fixed_thead=list(enabled=T))
+```
+  
+Creamos una nueva variables que identifique el retraso total, en base a la perdida o ganancia en el tiempo de llegada frente al tiempo de adelanto o retraso en la salida
+```{r,echo=TRUE,eval=TRUE}
+
+vuelos_reduc <- mutate(vuelos_reduc, RETRASO_TOTAL=ARRIVAL_DELAY - DEPARTURE_DELAY) 
+
+str(vuelos_reduc)
+boxplot(vuelos_reduc$RETRASO_TOTAL , xlab="Retrasos", ylab="minutos", ylim=c(-100, 400) )
+table(boxplot.stats(vuelos_reduc$RETRASO_TOTAL)$out)
+hist(vuelos_reduc$RETRASO_TOTAL)
+
+vuelos_reduc %>% 
+  ggplot( aes(x=RETRASO_TOTAL)) +
+  geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
+```
+  
+*<Incluir comentario>*
+
+
+<h2><span style="color:blue"> 4.2 Comprobación de la normalidad y homogeneidad de la varianza</span></h2>  
+  
+Utilizaremos la prueba Shapiro-Wilk test para comprobar la normalidad de la muestra para los valores DEPARTURE_DELAY, ARRIVAL_DELAY y DISTANCE
+```{r,echo=TRUE,eval=TRUE}
+
+shapiro.test(vuelos_reduc$DEPARTURE_DELAY[1:5000])
+
+shapiro.test(vuelos_reduc$ARRIVAL_DELAY[1:5000])
+
+shapiro.test(vuelos_reduc$DISTANCE[1:5000])
+shapiro.test(vuelos_reduc$RETRASO_TOTAL[1:5000])
+```
+  
+La prueba de Saphiro-Wilk, solo es posible para un máximo de 5000 registros, por lo que hemos realizado la prueba con un subconjunto con esa cantidad, y nos da como resultado que debemos rechazar la hipótesis nula, es decir, nos indicaría que las variables no siguen una distribución normal. Sin embargo, por el teorema central del límite, la distribución de la media de  cualquier muestra de datos se considera cada vez más normal según aumenta el tamaño de la misma y para  muestras superiores con N>30 se puede suponer normalidad, dado que podría aproximarse a una disribución normal.  
+
+```{r,echo=TRUE,eval=TRUE}
+
+hist(vuelos_reduc$RETRASO_TOTAL)
+
+
+```
+
+Aparentemenete, para esta variable, según el gráfico podríamos decir que la variable sigue una distribución normal.  
+Vamos a intentar generar Q-QPlot para mostrar gráficamente si la muestra sigue una distribución normal.  
+```{r,echo=TRUE,eval=TRUE}
+par(mfrow=c(2,1))
+qqnorm(vuelos_reduc$RETRASO_TOTAL, pch = 1, frame = FALSE)
+qqline(vuelos_reduc$RETRASO_TOTAL, col = "steelblue", lwd = 2)
+boxplot(vuelos_reduc$RETRASO_TOTAL, horizontal=T)
+```
+  
+En el gráfico podemos ver que los valores de la variable no se pegan a la recta de hecho, están formando una especie de S, donde solo unos cuantos valores centrales se tienen alrededor de la recta. Esto nos está identificando que esta variable tiene una gran cantidad de valores extremos que hacen que tengamos que preguntarnos si la variable sigue una distribución normal.
+
+
+
+*<Falta comprobar homogeneidad de la varianza, utilizar test de Filgner-Killeen>*  
+
+
+<h2><span style="color:blue"> 4.3 Aplicación de pruebas estadísticas</span>></h2>  
+
+**Aplicación de pruebas estadísticas para comparar los grupos de datos. En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.**  
+
+  
+Lo primero que vamos a hacer es comprobar la correlación entre algunas de las variables:
+```{r,echo=TRUE,eval=TRUE}
+correlacion <- dplyr::select(vuelos_reduc, "SCHEDULED_DEPARTURE", "DEPARTURE_TIME", "DEPARTURE_DELAY", 
+                      "AIR_TIME", "DISTANCE", "SCHEDULED_ARRIVAL", "ARRIVAL_TIME","ARRIVAL_DELAY",
+                      "RETRASO_TOTAL","DAY_OF_WEEK","MONTH")
+
+corr.res<-cor(correlacion)
+corrplot(corr.res,method="circle")
+```
+  
+Comprobamos una fuerte relación entre el retraso en la salida y el retraso en la llegada, que puee deberse a los vuelos no retrasados o quizá pueda ser, que al contrario de lo que podríamos pensar, el retraso en la salida no es recuperado en la llegada.  
+También vemos una fuerte relación entre la distancia y el tiempo de vuelo, algo que era de esperar. Se tiene también una relación, aunque no tan fuerte entre el tiempo estimado de llegada y el tiempo real de llegada.
+  
+Nos preguntamos ahora por la relación entre el retraso/adelanto de un vuelo con la hora del día en la que se realiza Para ello usaremos un modelo de regresión, dado que la variable día de la semana es de tipo factor y además crearemos una nueva variable que nos indique si el vuelo se ha retrasado o no.  
+Primero vamos a crear la tabla de contingencia y calcularemos la estimación Odds Ratio para ver la relación entre las variables Veremos si existe relación entre la variable dependiente, en nuestro caso si hay retraso o no y las variables explicativas.  
+Dividimos la muestra:  
+```{r,echo=TRUE,eval=TRUE}
+retraso <- data.frame (RETRASO=vuelos_reduc$RETRASO_TOTAL)
+retraso$RETRASO <- ifelse (retraso$RETRASO>0, "SI", "NO")
+retraso <- data.frame (retraso, WEEKEND=vuelos_reduc$DAY_OF_WEEK)
+#Contamos como fin de semana los viernes, sábados y domingos
+retraso$WEEKEND <- ifelse ((retraso$WEEKEND=="5" | retraso$WEEKEND=="6" | retraso$WEEKEND=="7"), "WEEKEND", "WEEKDAY")
+str(retraso)
+table (retraso$RETRASO)
+
+tabla_retraso_dias <- with(retraso, table(retraso$RETRASO,retraso$WEEKEND))
+tabla_retraso_dias %>% knitr::kable("html")  %>% kable_styling(position='center', font_size=12, fixed_thead=list(enabled=T))
+```
+  
+Aplicamos la función chi-cuadrado de Pearson a las variables para conocer si podemos aceptar la hipótesis nula y por lo tanto las variables no están relacionadas.
+```{r,echo=TRUE,eval=TRUE}
+chisq.test(tabla_retraso_dias, correct=FALSE)
+```
+  
+El p-value encontrado con el test chi-cuadrado es p-value < 2.2e-16 que se encuentra muy por debajo del nivel de significación marcado de 0.05, por lo que rechazamos la hipótesis nula y por lo tanto podemos concluir en  este caso que existe relación entre retraso y el día de la semana.  
+```{r,echo=TRUE,eval=TRUE}
+library(epitools)
+oddsratio(tabla_retraso_dias, verbose = TRUE)
+oddsratio(tabla_retraso_dias, rev="columns", verbose = TRUE)
+```
+  
+El Odds Ratio nos indica que la razón entre la ocurrencia de retraso del vuelo frente a no retraso es 0,93 veces mayor en día laborable y de 1.068 veces superior en fin de semana. Identificamos que no es una diferencia muy pronunciada.  
+  
+Realizamos el modelo de regresión lineal simple en el que estudiaremos la relación entre el retraso del vuelo en la llegada junto con la hora establecida 
+```{r,echo=TRUE,eval=TRUE}
+ggplot(vuelos_reduc, aes(x=SCHEDULED_ARRIVAL, y=ARRIVAL_DELAY)) +
+  geom_point() +
+  geom_smooth(method=lm , color="red", se=FALSE)
+
+
+retraso_modelo1 <- lm(ARRIVAL_DELAY~SCHEDULED_ARRIVAL, vuelos_reduc)
+retraso_modelo1 
+summary(retraso_modelo1)
+```
+  
+No conseguimos un buen modelo, seguramente porque no tenemos una dependencia lineal entre los valores.  
+
+Probamos a incluir en el modelo la variable distancia
+```{r,echo=TRUE,eval=TRUE}
+
+retraso_modelo2 <- lm(ARRIVAL_DELAY~SCHEDULED_ARRIVAL + DISTANCE, vuelos_reduc)
+retraso_modelo2 
+summary(retraso_modelo2)
+
+retraso_modelo3 <- lm(ARRIVAL_DELAY~SCHEDULED_DEPARTURE + DISTANCE + SCHEDULED_ARRIVAL, vuelos_reduc)
+retraso_modelo3 
+summary(retraso_modelo3)
+
+#y=-4.216+0.006x1+0.0013x2+0.003x3
+```
+*Revisar* Estos factores no tienen impacto o no están relacionados con el retraso.
+  
+Modelos de regresión logística:  
+Utilizaremos el dataframe creada anteriormente para incluir las variables en el formato correcto para la regresión. ¿Está el retraso asociado a los vuelos de fin de semana y a la hora de salida?
+```{r,echo=TRUE,eval=TRUE}
+retraso1 <- data.frame(retraso, DEPARTURE_HOUR=vuelos_reduc$DEPARTURE_HOUR)
+retraso$WEEKEND <- ifelse(retraso1$RETRASO=="NO", 0, 1)
+retraso1[1:2] <- lapply(retraso1[1:2], as.factor)
+str(retraso1)
+
+retraso_glm1 <- glm(RETRASO~WEEKEND , data=retraso1, family=binomial(logit))
+retraso_glm1
+
+summary(retraso_glm1)
+
+retraso2 <- data.frame(retraso1, DISTANCE=vuelos_reduc$DISTANCE)
+str(retraso2)
+retraso_glm2 <- glm(RETRASO~DEPARTURE_HOUR + DISTANCE, data=retraso2, family=binomial(logit))
+retraso_glm2
+summary(retraso_glm2)
+```
+  
+El modelo anterior no es para nada bueno, no parece que se relacionen, como ya se había visto en el gráfico de correlación. Vamos a intentar crear el modelo teniendo como variables explicativas la distancia y la hora de salida del vuelo por ver si puede haber una posible realción
+
+```{r,echo=TRUE,eval=TRUE}
+retraso3 <- data.frame(retraso2, MONTH=vuelos_reduc$MONTH,
+                      SCHEDULED_DEPARTURE=vuelos_reduc$SCHEDULED_DEPARTURE)
+str(retraso3)
+retraso_glm3 <- glm(RETRASO~SCHEDULED_DEPARTURE + DISTANCE + MONTH, data=retraso3, family=binomial)
+retraso_glm3
+summary(retraso_glm3)
+```
+
+
+```{r,echo=TRUE,eval=TRUE}
+#Realizamos una predicción de retraso con nuestro modelo, en el caso de un vuelo que salga a las 16horas y 
+#con una distancia de 1000 milas en el mes de junio
+newdata = data.frame(SCHEDULED_DEPARTURE = 0800 , DISTANCE=1000, MONTH=6)
+predict(retraso_glm3, newdata , type="response")
+
+newdata2 = data.frame(SCHEDULED_DEPARTURE =1600, DISTANCE=1000, MONTH=6)
+predict(retraso_glm3, newdata2 , type="response")
+
+#Incluimos la variables aeropuerto.
+retraso4 <- data.frame(retraso3, ORIGIN_AIRPORT=vuelos_reduc$ORIGIN_CODE)
+```
+
+
+```{r,echo=TRUE,eval=TRUE}
+# Para que los resultados estén acotados, elegimos los 10 aeropuertos con más tráfico:
+retraso$ORIGIN_AIRPORT <- ifelse (retraso4$ORIGIN_AIRPORT %in% 
+                            c("ATL","ORD","DFW","DEN","LAX","SFO","PHX","IAH","LAS","MSP"),
+                            retraso4$ORIGIN_AIRPORT,
+                            "OTROS")
+str(retraso3)
+#retraso_glm4 <- glm(RETRASO~DEPARTURE_HOUR + DISTANCE + MONTH + ORIGIN_AIRPORT, data=retraso4,
+#                    family=binomial)
+retraso_glm4
+summary(retraso_glm4)
+
+```
+  
+Vamos a realizar un contraste de hipótesis, nos preguntamos si la proporción de vuelos retrasados es inferior a la de vuelos en los tiempos establecidos.Para ello realizaremos un contraste sobre la proporción para muestras grandes.  
+Consideramos que tenemos una población que toma el valor 1 cuando el vuelo está retrasado y el 0 cuando no lo está. Tenemos por tanto una distribución de Bernoulli con parámetro *p* desconocido.
+$p_0$ será un valor prefijado, en nuestro caso 0.5, es decir el 50% que marcaría la igualdad de proporción de vuelos retrasados y no retrasados. 
+$$
+\left\{
+\begin{array}{ll}
+Hipótesis\ Nula & H_{0}: & p = p_0\\
+Hipótesis\ Alternativa & H_{1}: & p < p_0
+\end{array}
+\right.
+$$
+   
+Separamos las muestras de los vuelos retrasados RETRASO_TOTAL>0 y los no retrasados RETRASO_TOTAL<=0
+```{r,echo=TRUE,eval=TRUE}
+head(vuelos_reduc)
+vuelos_reduc$DELAYED <- ifelse(vuelos_reduc$RETRASO_TOTAL>0, 1, 0)
+
+vuelos_reduc %>% 
+  group_by(DELAYED) %>%
+  summarize(num_obs = n(), 
+            mean_delayed = round(mean(RETRASADO),0),
+            sd_delayed = round(sd(RETRASADO),0))
+
+DELAYED_GROUPED <- vuelos_reduc %>% group_by(DELAYED) %>% summarize(num_obs = n(), 
+                                                                    obs_totales =nrows(vuelos_reduc), 
+                                                                    p = num_obs/obs_totales)
+DELAYED_GROUPED %>% knitr::kable("html")  %>% kable_styling(position='center', font_size=12, fixed_thead=list(enabled=T))
+
+
+
+prop.test(DELAYED_GROUPED, obs_totales, p=NULL, alternative="less", correct=TRUE)
+
+```
+
+
+
+
+
+*Aplicamos ahora el algoritmo random forest para conocer el aeropuerto que debemos evitar*
+
+******   
+<h1><span style="color:darkblue"> **5. Representación de los resultados**</span></h1>  
+******   
+
+**Representación de los resultados a partir de tablas y gráficas.**
+
+```{r,echo=TRUE,eval=TRUE}
+
+#Comprobamos en un gráfico de barras los aeropuertos más populares.
+popular_airports <- sort(table(vuelos_reduc$ORIGIN_CODE), decreasing = TRUE )
+barplot(popular_airports[1:10], col = "blue", ylim = c(0,20000))
+
+
+#visualización del volumen de vuelos de cada día de la semana
+
+dias_semana <- sort(table(vuelos_reduc$DAY_OF_WEEK), decreasing=TRUE)
+
+
+barplot(dias_semana, col = "blue", ylim = c(0,50000))
+#Se comprueba que el tráfico diario en los días laborables es muy similar, viendose un cambio de tendencia en el fin de semana, en concreto en el sábado.
+
+
+ggplot(vuelos_reduc, aes(x=MONTH, fill=MONTH )) + 
+  geom_bar( ) +
+  scale_fill_hue(c = 20)
+
+ggplot(vuelos_reduc, aes(x=DAY_OF_WEEK, fill=DAY_OF_WEEK )) + 
+  geom_bar( ) +
+  scale_fill_hue(c = 40) 
+
+#Aerolíneas
+ggplot(vuelos_reduc, aes(x=AIRLINE, fill=AIRLINE )) + 
+  geom_bar( ) +
+  scale_fill_hue(c = 40)
+
+#Horas de salida de los vuelos
+ggplot(vuelos_reduc, aes(x=DEPARTURE_HOUR, fill=DEPARTURE_HOUR )) + 
+  geom_bar( ) +
+  scale_fill_hue(c = 20) +
+  theme(legend.position="none") 
+
+#Horas de llegada
+ggplot(vuelos_reduc, aes(x=ARRIVAL_HOUR, fill=ARRIVAL_HOUR )) + 
+  geom_bar( ) +
+  scale_fill_hue(c = 20) +
+  theme(legend.position="none") 
+
+#Analizamos los vuelos retrasados cuando el retraso es menor de 200 minutos
+
+vuelos_reduc %>% 
+  filter( DEPARTURE_DELAY<200) %>%
+  ggplot( aes(x=DEPARTURE_DELAY)) +
+  geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
+
+hist(vuelos_reduc$ARRIVAL_DELAY,breaks = 1000, xlim = c(-100,150))
+
+#Retraso por aerolínea
+
+
+```
+
+*...*
+
+******   
+<h1><span style="color:darkblue"> **6. Resolución del problema**</span></h1>  
+******   
+
+**A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?**
+
+```{r}
+
+
+
+
+
+```
+
+*...*
+
+******   
+<h1><span style="color:darkblue"> **7. Código**</span></h1>  
+******   
+
+**Adjuntar el código con el que se ha realizado la limpieza, análisis y representación de los datos.**
+
+```{r}
+
+
+
+
+
+```
+
+
+
+
+*...*
+
+
+******   
+<h1><span style="color:darkblue"> **8. Contribuciones al trabajo**</span></h1>  
+******   
+
+<div style="text-align: center">![](Contribucciones.PNG) </div>
+
+
+
+  
+    
+  
+#<span style="color:darkblue"> Referencias: </span>  
+
+<https://rpubs.com>  
+<https://www.kaggle.com/usdot/flight-delays>  
+
+
+
+
+
+
+
+
+</div>
