@@ -51,7 +51,6 @@ library(cluster)
 library(caret)
 #Para trabajar con fechas
 library(lubridate)
-library(DescTools) #Transformada de Box-Cox
 ```
 <span style="color:darkblue"> <font size="20"> **Descripción** </font></span>
 
@@ -123,11 +122,18 @@ set.seed(222)
 index <- sample(1:nrow(vuelos), size=0.05*nrow(vuelos))
 vuelos_reduc <- vuelos[index,]
 str(vuelos_reduc)
-summary(vuelos_reduc)
+```
+Hemos visto los primeros valores que toman las variables del conjunto con los datos reducidos. Ahora veremos un pequeño resumen estadístico de dichas variables.
 
-length(vuelos_reduc$YEAR)
+```{r,echo=TRUE,eval=TRUE}
+summary(vuelos_reduc)
 ```
 
+Nuestro conjunto de datos ahora tiene una dimensión de 290953 valores, como podemos apreciar en el siguiente output de R:
+
+```{r,echo=TRUE,eval=TRUE}
+length(vuelos_reduc$YEAR)
+```
  
 
 ******   
@@ -160,14 +166,36 @@ leaflet(df) %>% addTiles() %>% addCircleMarkers() #map visualization
 
 
 ```
+En el mapa podemos visualizar donde están localizados los aeropuertos analizados en este dataset.
+A continuación, lo que haremos será mostrar un gráfico de barras donde veremos el volumen de vuelos por cada aeropuerto. Debemos tener en cuenta que estamos trabajando con un conjunto reducido de los datos, por lo que este gráfico no nos aporta la información real del número de vuelos pero sí nos sirve para ver qué aeropuertos tienen mayor volumen de tráfico aereo.
+
+
+```{r}
+
+popular_airports <- sort(table(flight_airports$ORIGIN_CODE), decreasing = TRUE )
+barplot(popular_airports[1:10], col = "blue", ylim = c(0,20000))
+```
+
+También vemos que el jueves es el día de la semana con mayor número de vuelos. Al igual que antes, estamos trabajando con el conjunto de datos reducido, por lo que la información mostrada nos ayuda a ver el día de la semana con mayor número de vuelos pero el número que obtenemos no representa al total del año 2015, si no a nuestra muestra reducida.
+
+```{r}
+sort(table(flight_airports$DAY_OF_WEEK), decreasing = TRUE )
+```
+
 
 A partir de aquí, vamos a identificar los tipos de variables y a quedarnos con los datos que nos interesarán para realizar nuestro estudio.  
-```{r,echo=TRUE,eval=TRUE}
 
+```{r,echo=TRUE,eval=TRUE}
 res <- sapply(vuelos_reduc,class)
 kable(data.frame(variables=names(res),clase=as.vector(res)), 
       caption = "asignación de clase de objeto R a cada variable")
+```
 
+
+
+Vemos la asignación de clase que R le da a cada variable. Sin embargo, tenemos que reasignarle la clase a algunas variables como vemos a continuación.
+
+```{r,echo=TRUE,eval=TRUE}
 vuelos[1:4] <- lapply(vuelos[1:4], as.numeric)
 vuelos[6] <- lapply(vuelos[6], as.numeric)
 vuelos[10:25] <- lapply(vuelos[10:25], as.numeric)
@@ -176,9 +204,14 @@ res <- sapply(vuelos,class)
 tabla_datos <- data.frame(variables=names(res),clase=as.vector(res))
 kable(tabla_datos, 
       caption = "asignación de clase de objeto R a cada variable")
+```
 
+Volvemos a ver un resumen con los primeros datos de cada variable:
+
+```{r,echo=TRUE,eval=TRUE}
 str(vuelos)
 ```
+
   
 De todas las variables cargadas, de momento nos vamos a quedar con las siguientes:  
 *MONTH  
@@ -212,6 +245,7 @@ str(vuelos_reduc)
 
 ```
 
+Con este resumen comprobamos que nuestro dataset contiene solo las variables que hemos seleccionado.
 
 
 ******   
@@ -269,6 +303,7 @@ day_wrong
 day_week_wrong <- which(vuelos_reduc$DAY_OF_WEEK > 7 | vuelos_reduc$DAY_OF_WEEK <1)
 day_week_wrong
 
+str(vuelos_reduc)
 
 
 ```
@@ -339,12 +374,11 @@ No podemos eliminar dichos valores ya que son la esencia de esta variable.
   
 En resumen, el conjunto de datos que estamos tratando tiene muchos valores muy dispersos, de momento no vamos a hacer nada con ellos, los mantendremos y en algunos casos concretos, si fuese necesario, realizaremos los filtrados correspondientes.
 
-
 ******   
 <h1><span style="color:darkblue"> **4. Análisis de los datos**  </span></h1>  
 ******   
   
-<h2><span style="color:blue"> 4.1 Selección de los grupos de datos  </span>></h2>
+<h2><span style="color:blue"> 4.1 Selección de los grupos de datos  </span></h2>
 
 **Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar)**  
 Para poder trabajar mejor con las variables de tiempo, y dado que no nos van a interesar en principio los minutos vamos a dejar solamente las horas para poder realizar ciertos análisis de este dato.
@@ -385,7 +419,7 @@ vuelos_reduc %>%
   geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
 ```
   
-En los gráficos podemos ver como, del mismo modo que se tenía en el gráfico de cajas y bigotes del apartado 3 para las variables DEPARTURE_DELAY y ARRIVAL_DELAY, para esta nueva variable, se tiene un comportamiento similar, como era de esperar. La gran mayoría de los vuelos se concentran alrededor del 0, es decir que los vuelos salen y llegan en los tiempos establecidos. Sin embargo el gráfico se alarga a ambos lados, sobre todo hacia la derecha, debido a la gran dispersión de tiempos de vuelos retrasados (diferencia positiva).
+*<Incluir comentario>*
 
 
 <h2><span style="color:blue"> 4.2 Comprobación de la normalidad y homogeneidad de la varianza</span></h2>  
@@ -419,67 +453,11 @@ qqline(vuelos_reduc$RETRASO_TOTAL, col = "steelblue", lwd = 2)
 boxplot(vuelos_reduc$RETRASO_TOTAL, horizontal=T)
 ```
   
-Contrastamos el gráfico Q-QPlot contra el gráfico de cajas, para ver el comportamiento. En el gráfico de arriba, podemos ver que los valores de la variable no se pegan a la recta, de hecho, se levanta hacia la parte de la derecha despegándose de la recta y solo unos cuantos valores centrales se tienen alrededor de la recta. Esto nos está identificando que esta variable tiene una gran cantidad de valores extremos que hacen que tengamos que preguntarnos si la variable sigue una distribución normal.
-  
-Como no tenemos seguridad de si la población que estamos estudiando sigue una distribución normal, utilizaremos el test de Levene para comprobar la homogeneidad de la varianza u homocedasticidad. Compararemos nuestra variable con la variable DAY_OF_WEEK (realizamos una agrupación de los datos por día de la semana). Tomaremos como hipótesis nula la semajanza de variables y como hipótesis alternativa la no igualdad en la varianza de las varibales con un índice de significación ${\alpha}$=0.05
-```{r,echo=TRUE,eval=TRUE}
-str(vuelos_reduc)
-
-plot(RETRASO_TOTAL ~ as.factor(DAY_OF_WEEK), data=vuelos_reduc)
-```
-  
-Según el gráfico parece que podemos tener homogeneidad en las varianzas
-
-```{r,echo=TRUE,eval=TRUE}
-LeveneTest(RETRASO_TOTAL ~ as.factor(DAY_OF_WEEK), vuelos_reduc, center=median)
-```
-  
-El Test de Levene nos da un p-valor de 1.099e-06 que es menor que 0.05 (95% de nivel de significación), con lo que rechazaríamos la hipotesis nula de varianzas iguales.  
-
-Comprobamos con el test de Filgner-Killeen, que habitualmente se utiliza si desconocemos si la distribución es normal o en el caso de que no se tenga una distribución normal de la varible.
-```{r,echo=TRUE,eval=TRUE}
-fligner.test(RETRASO_TOTAL ~ as.factor(DAY_OF_WEEK), data=vuelos_reduc)
-```
-  
-Comprobamos que para este caso, el resultado sigue siendo un p-valor por debajo de 0.05, por lo que también rechazaríamos la hipótesis nula. Es decir, parece que se tienen diferencias significativas entre las varianzas de ambos grupos.
-
-Comprobamos con otras variables como el mes o la hora de salida.
-
-```{r,echo=TRUE,eval=TRUE}
-plot(RETRASO_TOTAL ~ as.factor(MONTH), data=vuelos_reduc)
-LeveneTest(RETRASO_TOTAL ~ as.factor(MONTH), vuelos_reduc, center=mean)
-
-plot(RETRASO_TOTAL ~ DEPARTURE_HOUR, data=vuelos_reduc)
-```
-  
-En el caso de la hora de salida si que se aprecian ciertas diferencias los tramos horarios de madrugada, donde no hay apenas vuelos programados, por lo que el resultado esperado en este caso podría decirse que será la no homogeneidad de la varianza.
-
-```{r,echo=TRUE,eval=TRUE}
-LeveneTest(RETRASO_TOTAL ~ DEPARTURE_HOUR, vuelos_reduc, center=mean)
-
-```
-  
-Comprobamos que el p-valor obtenido, como en los casos anteriores, nos hace rechazar la hipótesis nula de varianzas similares. Por lo que se determina que no hay homogeneidad en las variables.
-
-Vemos si podemos conseguir una mejora de la normalidad y la homocedasticidad aplicando la transformación de Box-Cox
-```{r,echo=TRUE,eval=TRUE}
+En el gráfico podemos ver que los valores de la variable no se pegan a la recta de hecho, están formando una especie de S, donde solo unos cuantos valores centrales se tienen alrededor de la recta. Esto nos está identificando que esta variable tiene una gran cantidad de valores extremos que hacen que tengamos que preguntarnos si la variable sigue una distribución normal.
 
 
-bx_vuelos_reduc <- BoxCox(vuelos_reduc$RETRASO_TOTAL, lambda = BoxCoxLambda(vuelos_reduc$RETRASO_TOTAL))
 
-
-par(mfrow=c(2,2))
-qqnorm(vuelos_reduc$RETRASO_TOTAL, main="Lognormal")
-qqline(vuelos_reduc$RETRASO_TOTAL,col=2)
-qqnorm(bx_vuelos_reduc, main="Box-Cox")
-qqline(bx_vuelos_reduc,col=2)
-hist(vuelos_reduc$RETRASO_TOTAL,main="Lognormal")
-hist(bx_vuelos_reduc, main="Box-Cox")
-```
-  
-No parece que encontremos una mejora de los datos con la transformación de Box-Cox. 
-
-
+*<Falta comprobar homogeneidad de la varianza, utilizar test de Filgner-Killeen>*  
 
 
 <h2><span style="color:blue"> 4.3 Aplicación de pruebas estadísticas</span>></h2>  
@@ -665,62 +643,123 @@ prop.test(DELAYED_GROUPED, obs_totales, p=NULL, alternative="less", correct=TRUE
 
 **Representación de los resultados a partir de tablas y gráficas.**
 
+
+Comenzamos las representaciones viendo qué aeropuertos son los que mayor volumen de vuelos acogen:
+
+
 ```{r,echo=TRUE,eval=TRUE}
 
 #Comprobamos en un gráfico de barras los aeropuertos más populares.
 popular_airports <- sort(table(vuelos_reduc$ORIGIN_CODE), decreasing = TRUE )
 barplot(popular_airports[1:10], col = "blue", ylim = c(0,20000))
+```
+
+En la gráfica de barras podemos observar que fue el aeropuerto de Atlanta el más popular de Estados Unidos en el año 2015.
+
+Ya que tenemos el aeropuerto, ahora vamos a ver qué dia de la semana es en el que se producen más vuelos.
 
 
+```{r,echo=TRUE,eval=TRUE}
 #visualización del volumen de vuelos de cada día de la semana
 
 dias_semana <- sort(table(vuelos_reduc$DAY_OF_WEEK), decreasing=TRUE)
 
-
 barplot(dias_semana, col = "blue", ylim = c(0,50000))
-#Se comprueba que el tráfico diario en los días laborables es muy similar, viendose un cambio de tendencia en el fin de semana, en concreto en el sábado.
 
+```
 
+Se comprueba que el tráfico diario en los días laborables es muy similar, viendose un cambio de tendencia en el fin de semana, en concreto en el sábado.
+
+En el siguiente gráfico, veremos la relación del número de vuelos frente al mes del año:
+
+```{r,echo=TRUE,eval=TRUE}
 ggplot(vuelos_reduc, aes(x=MONTH, fill=MONTH )) + 
   geom_bar( ) +
   scale_fill_hue(c = 20)
 
+```
+
+De este gráfico comprobamos que febrero es el mes que menos vuelos se producen (uno de los factores que pueden influir en este hecho es que es el mes del año más corto).
+Por otro lado vemos, que los meses de verano son los que mayor afluencia de vuelos hay, siendo julio el que alberga el mayor número de vuelos.
+
+Otra conclusión que podemos sacar, es que quitando los meses de verano, en el resto del año se aprecia la tencencia en el que los meses con 30 días tienen menor volumen de vuelos que los de 31 días.
+
+
+```{r,echo=TRUE,eval=TRUE}
 ggplot(vuelos_reduc, aes(x=DAY_OF_WEEK, fill=DAY_OF_WEEK )) + 
   geom_bar( ) +
   scale_fill_hue(c = 40) 
+```
 
+
+En el grafico que muestran el número de vuelos de cada aerolínea podemos ver como una de ellas prevalece sobre todas las demás. 
+La aerolínea WN, cuyas siglas corresponden a Southwest Airlines Co. operó más de 60000 vuelos en el año 2015 en Estados Unidos, mientras que la segunda que le sigue en el ranking operó 45000 vuelos. Vemos que la diferencia es muy significativa.
+
+```{r,echo=TRUE,eval=TRUE}
 #Aerolíneas
 ggplot(vuelos_reduc, aes(x=AIRLINE, fill=AIRLINE )) + 
   geom_bar( ) +
   scale_fill_hue(c = 40)
+```
 
+También queremos comprobar las horas del día con mayor número de vuelos y, como era de esperar la mayoría de los vuelos se producen de 6 de la mañana a 7 de la tarde. Cayendo significativamente a valores prácticamente nulos en la madrugada.
+
+```{r,echo=TRUE,eval=TRUE}
 #Horas de salida de los vuelos
 ggplot(vuelos_reduc, aes(x=DEPARTURE_HOUR, fill=DEPARTURE_HOUR )) + 
   geom_bar( ) +
   scale_fill_hue(c = 20) +
   theme(legend.position="none") 
+```
 
+Por otro lado, las horas de llegadas más populares fueron de 9 de la mañana a 9 de la noche. Vemos que hay un desplazamiento de horario de 2-3 horas con respecto a la gráfica de las horas de salida, lo cual es lógico si tenemos en cuenta la duración de los vuelos.
+
+```{r,echo=TRUE,eval=TRUE}
 #Horas de llegada
 ggplot(vuelos_reduc, aes(x=ARRIVAL_HOUR, fill=ARRIVAL_HOUR )) + 
   geom_bar( ) +
   scale_fill_hue(c = 20) +
   theme(legend.position="none") 
+```
 
+
+```{r,echo=TRUE,eval=TRUE}
 #Analizamos los vuelos retrasados cuando el retraso es menor de 200 minutos
 
 vuelos_reduc %>% 
   filter( DEPARTURE_DELAY<200) %>%
   ggplot( aes(x=DEPARTURE_DELAY)) +
   geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
+```
+
+
+```{r,echo=TRUE,eval=TRUE}
 
 hist(vuelos_reduc$ARRIVAL_DELAY,breaks = 1000, xlim = c(-100,150))
 
 #Retraso por aerolínea
+vuelos_reduc %>% 
+  filter( DEPARTURE_DELAY<200) %>%
+  ggplot( aes(x=AIRLINE)) +
+  geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
 
 
 ```
 
-*...*
+
+Vemos que la aerolínea que más retrasos en la salida tuvo fue la que corresponde a las siglas AA (American Airlines Inc.). También podemos comprobar que la diferencia entre la primera aeorlínea con la segunda es de más del doble, por lo que durante el año 2015 hubo  mayor probabilidad de sufrir retrasos al volar con American Airlines que con cualquier otra aerolínea.
+
+```{r,echo=TRUE,eval=TRUE}
+vuelos_reduc %>% 
+  filter( ARRIVAL_DELAY<200) %>%
+  ggplot( aes(x=AIRLINE)) +
+  geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
+
+
+```
+
+Comprobamos que los resultados entre de los retrasos tanto de llegada como de salida por aerolínea son prácticamente iguales, por lo que American Aerlines fue la que más retrasos tuvo en las llegadas. Por otro lado, es lógico que si un vuelo se retrasa en la salida, se retrase también en la llegada.
+
 
 ******   
 <h1><span style="color:darkblue"> **6. Resolución del problema**</span></h1>  
