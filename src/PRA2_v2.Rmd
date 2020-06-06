@@ -123,8 +123,17 @@ set.seed(222)
 index <- sample(1:nrow(vuelos), size=0.05*nrow(vuelos))
 vuelos_reduc <- vuelos[index,]
 str(vuelos_reduc)
-summary(vuelos_reduc)
+```
+  
+Hemos visto los primeros valores que toman las variables del conjunto con los datos reducidos. Ahora veremos un pequeño resumen estadístico de dichas variables.
 
+```{r,echo=TRUE,eval=TRUE}
+summary(vuelos_reduc)
+```
+  
+Nuestro conjunto de datos ahora tiene una dimensión de 290953 valores, como podemos apreciar en el siguiente output de R:
+
+```{r,echo=TRUE,eval=TRUE}
 length(vuelos_reduc$YEAR)
 ```
 
@@ -160,14 +169,32 @@ leaflet(df) %>% addTiles() %>% addCircleMarkers() #map visualization
 
 
 ```
+  
+En el mapa podemos visualizar donde están localizados los aeropuertos analizados en este dataset.
+A continuación, lo que haremos será mostrar un gráfico de barras donde veremos el volumen de vuelos por cada aeropuerto. Debemos tener en cuenta que estamos trabajando con un conjunto reducido de los datos, por lo que este gráfico no nos aporta la información real del número de vuelos pero sí nos sirve para ver qué aeropuertos tienen mayor volumen de tráfico aereo.  
 
+
+```{r}
+popular_airports <- sort(table(flight_airports$ORIGIN_CODE), decreasing = TRUE )
+barplot(popular_airports[1:10], col = "blue", ylim = c(0,20000))
+```
+  
+También vemos que el jueves es el día de la semana con mayor número de vuelos. Al igual que antes, estamos trabajando con el conjunto de datos reducido, por lo que la información mostrada nos ayuda a ver el día de la semana con mayor número de vuelos pero el número que obtenemos no representa al total del año 2015, si no a nuestra muestra reducida.  
+
+```{r}
+sort(table(flight_airports$DAY_OF_WEEK), decreasing = TRUE )
+```  
+  
 A partir de aquí, vamos a identificar los tipos de variables y a quedarnos con los datos que nos interesarán para realizar nuestro estudio.  
 ```{r,echo=TRUE,eval=TRUE}
-
 res <- sapply(vuelos_reduc,class)
 kable(data.frame(variables=names(res),clase=as.vector(res)), 
       caption = "asignación de clase de objeto R a cada variable")
+```
+  
+Vemos la asignación de clase que R le da a cada variable. Sin embargo, tenemos que reasignarle la clase a algunas variables como vemos a continuación.  
 
+```{r,echo=TRUE,eval=TRUE}
 vuelos[1:4] <- lapply(vuelos[1:4], as.numeric)
 vuelos[6] <- lapply(vuelos[6], as.numeric)
 vuelos[10:25] <- lapply(vuelos[10:25], as.numeric)
@@ -176,7 +203,10 @@ res <- sapply(vuelos,class)
 tabla_datos <- data.frame(variables=names(res),clase=as.vector(res))
 kable(tabla_datos, 
       caption = "asignación de clase de objeto R a cada variable")
-
+```
+  
+Volvemos a ver un resumen con los primeros datos de cada variable:  
+```{r,echo=TRUE,eval=TRUE}
 str(vuelos)
 ```
   
@@ -269,8 +299,6 @@ day_wrong
 day_week_wrong <- which(vuelos_reduc$DAY_OF_WEEK > 7 | vuelos_reduc$DAY_OF_WEEK <1)
 day_week_wrong
 
-
-
 ```
   
 Comprobamos que los valores de distancias y horas en base a los valores mínimos y máximos son correctos. En el caso de los aeropuertos, conocemos que hay aeropuertos que tienen diferente nomenclatura para un mismo aeropuerto, de momento no vamos a realizar ninguna modificación sobre este dato, supondremos que son aeropuertos diferentes.
@@ -344,7 +372,7 @@ En resumen, el conjunto de datos que estamos tratando tiene muchos valores muy d
 <h1><span style="color:darkblue"> **4. Análisis de los datos**  </span></h1>  
 ******   
   
-<h2><span style="color:blue"> 4.1 Selección de los grupos de datos  </span>></h2>
+<h2><span style="color:blue"> 4.1 Selección de los grupos de datos  </span></h2>
 
 **Selección de los grupos de datos que se quieren analizar/comparar (planificación de los análisis a aplicar)**  
 Para poder trabajar mejor con las variables de tiempo, y dado que no nos van a interesar en principio los minutos vamos a dejar solamente las horas para poder realizar ciertos análisis de este dato.
@@ -614,8 +642,8 @@ retraso$ORIGIN_AIRPORT <- ifelse (retraso4$ORIGIN_AIRPORT %in%
 str(retraso3)
 #retraso_glm4 <- glm(RETRASO~DEPARTURE_HOUR + DISTANCE + MONTH + ORIGIN_AIRPORT, data=retraso4,
 #                    family=binomial)
-retraso_glm4
-summary(retraso_glm4)
+#retraso_glm4
+#summary(retraso_glm4)
 
 ```
   
@@ -639,17 +667,19 @@ vuelos_reduc$DELAYED <- ifelse(vuelos_reduc$RETRASO_TOTAL>0, 1, 0)
 vuelos_reduc %>% 
   group_by(DELAYED) %>%
   summarize(num_obs = n(), 
-            mean_delayed = round(mean(RETRASADO),0),
-            sd_delayed = round(sd(RETRASADO),0))
+            mean_delayed = round(mean(RETRASO_TOTAL),0),
+            sd_delayed = round(sd(RETRASO_TOTAL),0))
 
 DELAYED_GROUPED <- vuelos_reduc %>% group_by(DELAYED) %>% summarize(num_obs = n(), 
-                                                                    obs_totales =nrows(vuelos_reduc), 
+                                                                    obs_totales =length(vuelos_reduc$DAY), 
                                                                     p = num_obs/obs_totales)
 DELAYED_GROUPED %>% knitr::kable("html")  %>% kable_styling(position='center', font_size=12, fixed_thead=list(enabled=T))
 
+n1=DELAYED_GROUPED[1,2]
+n2=DELAYED_GROUPED[2,2]
 
+prop.test(x=c(209810,75840), n=c(285650,285650), p=NULL, alternative="less", correct=TRUE)
 
-prop.test(DELAYED_GROUPED, obs_totales, p=NULL, alternative="less", correct=TRUE)
 
 ```
 
@@ -664,63 +694,101 @@ prop.test(DELAYED_GROUPED, obs_totales, p=NULL, alternative="less", correct=TRUE
 ******   
 
 **Representación de los resultados a partir de tablas y gráficas.**
-
+  
+En este apartado intentaremos dar respuesta a algunas de nuestras dudas mediante la representación gráfica de los datos elegidos.  
+Comenzamos las representaciones viendo qué aeropuertos son los que mayor volumen de vuelos acogen:  
 ```{r,echo=TRUE,eval=TRUE}
-
 #Comprobamos en un gráfico de barras los aeropuertos más populares.
 popular_airports <- sort(table(vuelos_reduc$ORIGIN_CODE), decreasing = TRUE )
 barplot(popular_airports[1:10], col = "blue", ylim = c(0,20000))
+```
+  
+En la gráfica de barras podemos observar que fue el aeropuerto de Atlanta el más popular de Estados Unidos en el año 2015. En realidad, era de esperar este resultado, dado que el aeropuerto de Atlanta es el aeropuerto con más tráfico aéreo de Estados Unidos y del mundo.   
 
-
+Una vez que tenemos el aeropuerto, ahora vamos a ver qué dia de la semana es en el que se producen más vuelos.
+```{r,echo=TRUE,eval=TRUE}
 #visualización del volumen de vuelos de cada día de la semana
 
 dias_semana <- sort(table(vuelos_reduc$DAY_OF_WEEK), decreasing=TRUE)
 
 
 barplot(dias_semana, col = "blue", ylim = c(0,50000))
-#Se comprueba que el tráfico diario en los días laborables es muy similar, viendose un cambio de tendencia en el fin de semana, en concreto en el sábado.
-
-
-ggplot(vuelos_reduc, aes(x=MONTH, fill=MONTH )) + 
-  geom_bar( ) +
-  scale_fill_hue(c = 20)
 
 ggplot(vuelos_reduc, aes(x=DAY_OF_WEEK, fill=DAY_OF_WEEK )) + 
   geom_bar( ) +
-  scale_fill_hue(c = 40) 
+  scale_fill_hue(c = 40)
+```
+  
+Se comprueba que el tráfico diario en los días laborables es muy similar, viendose un cambio de tendencia en el fin de semana, en concreto en el sábado.  
+  
+En el siguiente gráfico, veremos la relación del número de vuelos frente al mes del año:  
 
-#Aerolíneas
+```{r,echo=TRUE,eval=TRUE}
+ggplot(vuelos_reduc, aes(x=MONTH, fill=MONTH )) + 
+  geom_bar( ) +
+  scale_fill_hue(c = 20)
+```
+  
+De este gráfico comprobamos que febrero es el mes que menos vuelos se producen (uno de los factores que pueden influir en este hecho es que es el mes del año más corto).  
+Por otro lado vemos, que los meses de verano son los que mayor afluencia de vuelos hay, siendo julio el que alberga el mayor número de vuelos.  
+  
+Otra conclusión que podemos sacar, es que quitando los meses de verano, en el resto del año se aprecia la tencencia en el que los meses con 30 días tienen menor volumen de vuelos que los de 31 días.  
+
+```{r,echo=TRUE,eval=TRUE}
 ggplot(vuelos_reduc, aes(x=AIRLINE, fill=AIRLINE )) + 
   geom_bar( ) +
   scale_fill_hue(c = 40)
+```
+  
+En el grafico que muestran el número de vuelos de cada aerolínea podemos ver como una de ellas prevalece sobre todas las demás.  
+La aerolínea WN, cuyas siglas corresponden a Southwest Airlines Co. operó más de 60000 vuelos en el año 2015 en Estados Unidos, mientras que la segunda que le sigue en el ranking operó 45000 vuelos. Vemos que la diferencia es muy significativa. Southwest Airlines es la mayor compañía aeronáutica de Estados Unidos y el mayor operador de bajo coste del mundo.  
 
+```{r,echo=TRUE,eval=TRUE}
 #Horas de salida de los vuelos
 ggplot(vuelos_reduc, aes(x=DEPARTURE_HOUR, fill=DEPARTURE_HOUR )) + 
   geom_bar( ) +
   scale_fill_hue(c = 20) +
-  theme(legend.position="none") 
+  theme(legend.position="none")
+```
+  
+También queremos comprobar las horas del día con mayor número de vuelos y, como era de esperar la mayoría de los vuelos se producen de 6 de la mañana a 7 de la tarde. Cayendo significativamente a valores prácticamente nulos en la madrugada.  
 
+```{r,echo=TRUE,eval=TRUE}
 #Horas de llegada
 ggplot(vuelos_reduc, aes(x=ARRIVAL_HOUR, fill=ARRIVAL_HOUR )) + 
   geom_bar( ) +
   scale_fill_hue(c = 20) +
-  theme(legend.position="none") 
+  theme(legend.position="none")
+```
+  
+Por otro lado, las horas de llegadas más populares fueron de 9 de la mañana a 9 de la noche. Vemos que hay un desplazamiento de horario de 2-3 horas con respecto a la gráfica de las horas de salida, lo cual es lógico si tenemos en cuenta la duración de los vuelos.
 
+```{r,echo=TRUE,eval=TRUE}
+
+hist(vuelos_reduc$ARRIVAL_DELAY,breaks = 1000, xlim = c(-100,150))
+
+#Retraso por aerolínea
 #Analizamos los vuelos retrasados cuando el retraso es menor de 200 minutos
-
 vuelos_reduc %>% 
   filter( DEPARTURE_DELAY<200) %>%
   ggplot( aes(x=DEPARTURE_DELAY)) +
   geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
 
-hist(vuelos_reduc$ARRIVAL_DELAY,breaks = 1000, xlim = c(-100,150))
-
-#Retraso por aerolínea
-
-
 ```
+  
+Vemos que la aerolínea que más retrasos en la salida tuvo fue la que corresponde a las siglas AA (American Airlines Inc.). También podemos comprobar que la diferencia entre la primera aeorlínea con la segunda es de más del doble, por lo que durante el año 2015 hubo  mayor probabilidad de sufrir retrasos al volar con American Airlines que con cualquier otra aerolínea.  
 
-*...*
+```{r,echo=TRUE,eval=TRUE}
+vuelos_reduc %>% 
+  filter( ARRIVAL_DELAY<200) %>%
+  ggplot( aes(x=AIRLINE)) +
+  geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
+```
+  
+Comprobamos que los resultados entre de los retrasos tanto de llegada como de salida por aerolínea son prácticamente iguales, por lo que American Aerlines fue la que más retrasos tuvo en las llegadas. Por otro lado, es lógico que si un vuelo se retrasa en la salida, se retrase también en la llegada.  
+
+
+
 
 ******   
 <h1><span style="color:darkblue"> **6. Resolución del problema**</span></h1>  
@@ -736,7 +804,7 @@ hist(vuelos_reduc$ARRIVAL_DELAY,breaks = 1000, xlim = c(-100,150))
 
 ```
 
-*...*
+
 
 ******   
 <h1><span style="color:darkblue"> **7. Código**</span></h1>  
@@ -755,9 +823,6 @@ hist(vuelos_reduc$ARRIVAL_DELAY,breaks = 1000, xlim = c(-100,150))
 
 
 
-*...*
-
-
 ******   
 <h1><span style="color:darkblue"> **8. Contribuciones al trabajo**</span></h1>  
 ******   
@@ -772,11 +837,7 @@ hist(vuelos_reduc$ARRIVAL_DELAY,breaks = 1000, xlim = c(-100,150))
 #<span style="color:darkblue"> Referencias: </span>  
 
 <https://rpubs.com>  
-<https://www.kaggle.com/usdot/flight-delays>  
-
-
-
-
+<https://www.kaggle.com/usdot/flight-delays>
 
 
 
