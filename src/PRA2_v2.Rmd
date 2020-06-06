@@ -873,6 +873,15 @@ ggplot(vuelos_reduc, aes(x=AIRLINE, fill=AIRLINE )) +
 En el grafico que muestran el número de vuelos de cada aerolínea podemos ver como una de ellas prevalece sobre todas las demás.  
 La aerolínea WN, cuyas siglas corresponden a Southwest Airlines Co. operó más de 60000 vuelos en el año 2015 en Estados Unidos, mientras que la segunda que le sigue en el ranking operó 45000 vuelos. Vemos que la diferencia es muy significativa. Southwest Airlines es la mayor compañía aeronáutica de Estados Unidos y el mayor operador de bajo coste del mundo.  
 
+  
+```{r,echo=TRUE,eval=TRUE}
+vuelos_reduc %>% 
+  filter( RETRASO_TOTAL>0) %>%
+  ggplot(aes(AIRLINE,fill=RETRASO_TOTAL))+geom_bar() +labs(x="ORIGIN_CODE", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Distancias")
+```   
+  
+Si comprobamos el retraso por aerolínea, nos aparece Southwest como la aerolínea con más vuelos retrasados con bastante diferencia.  
+  
 ```{r,echo=TRUE,eval=TRUE}
 #Horas de salida de los vuelos
 ggplot(vuelos_reduc, aes(x=DEPARTURE_HOUR, fill=DEPARTURE_HOUR )) + 
@@ -941,7 +950,15 @@ vuelos_reduc %>%
   
 Según el gráfico, parece que el mes con más retrasos es enero, algo que no es lo que podríamos esperar en un inicio, tendríamos que hacer un estudio de las causas de los retrasos para poder valorar bien este dato. Los mejores meses para viajar parecen ser los meses de septiembre, octubre y noviembre.  
   
-
+```{r,echo=TRUE,eval=TRUE}
+vuelos_reduc %>% 
+  filter( RETRASO_TOTAL>0 & DISTANCE<2000) %>%
+  ggplot(aes(DISTANCE,fill=RETRASO_TOTAL))+geom_bar() +labs(x="DISTANCE", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Distancias")
+```  
+  
+   
+  
+  
 
 ******   
 <h1><span style="color:darkblue"> **6. Resolución del problema**</span></h1>  
