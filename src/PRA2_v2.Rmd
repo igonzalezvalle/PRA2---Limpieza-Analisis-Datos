@@ -956,7 +956,102 @@ vuelos_reduc %>%
   ggplot(aes(DISTANCE,fill=RETRASO_TOTAL))+geom_bar() +labs(x="DISTANCE", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Distancias")
 ```  
   
-   
+  
+
+
+A continuación, vamos a ver varias gráficas que nos aportan información en % con lo que podemos sacar mejores conclusiones sobre los retrasos y las aerolíneas, aeropuertos, etc. Para ello vamos a trabajar con el conjunto original de datos, por lo que los resultados obtenidos serán los reales el año 2015.
+
+Comenzaremos obteniendo un conjunto de datos que no contenga datos desconocidos para poder estimar los porcentajes:
+
+
+```{r,echo=TRUE,eval=TRUE}
+
+indice <- which(is.na(vuelos$AIR_SYSTEM_DELAY)) #locations of obs with missing values
+vuelos_delay <- vuelos[-indice,]
+dim(vuelos_delay)
+
+```
+
+Ahora, mostraremos una gráfica de barras donde podemos ver el porcentaje de retrasos de cada aerolínea:
+
+```{r,echo=TRUE,eval=TRUE}
+barplot(table(vuelos_delay$AIRLINE) / table(vuelos$AIRLINE) * 100)
+
+```
+
+Vemos que la que mayor porcentaje de vuelos retrasados tiene es NK. Esta gráfica nos aporta una información más valiosa que la anterior donde veíamos los retrasos totales por compañías, ya que en la anterior obteníamos que la que más retrasos registraba era AA, pero este dato se debía a que es la compañía que más opera en Estados Unidos.
+
+
+Los porcentajes exactos los vemos en la siguiente tabla:
+
+```{r,echo=TRUE,eval=TRUE}
+
+table(vuelos_delay$AIRLINE) / table(vuelos$AIRLINE) * 100
+
+
+```
+
+
+Apreciamos que NK tiene un 29.15 % de vuelos retrasados, frente al 11.29 de HA que es la que menor porcentaje presenta.
+
+
+Ahora lo que analizaremos será el porcentaje de vuelos retrasados según los meses:
+
+```{r,echo=TRUE,eval=TRUE}
+
+barplot(table(vuelos_delay$MONTH) / table(vuelos$MONTH) * 100)
+
+
+table(vuelos_delay$MONTH) / table(vuelos$MONTH) * 100
+
+
+```
+
+
+Vemos como el mes de junio es el que presenta más retrasos. Un dato curioso que obtenemos de esta gráfica es que observamos que el mes con mayor % de retrasos no se corresponde con el mes con mayor número de vuelos. En una gráfica anterior podíamos ver como julio fue el mes con mayor número de vuelos en el año 2015 en Estados Unidos.
+
+Ya que con los meses hemos obtenido resultados que no esperábamos, vamos a ver si con los días de la semana ocurre lo mismo. Recordemos que era el jueves el día de la semana con mayor número de vuelos:
+
+```{r,echo=TRUE,eval=TRUE}
+
+barplot(table(vuelos_delay$DAY_OF_WEEK) / table(vuelos$DAY_OF_WEEK) * 100)
+
+
+table(vuelos_delay$DAY_OF_WEEK) / table(vuelos$DAY_OF_WEEK) * 100
+
+
+```
+
+En esta ocasión obtenemos el resultado esperado: el jueves es el día con mayor % de vuelos retrasados, lo que es lógico al ser el día de la semana con mayor número de vuelos.
+
+
+Otro dato curioso que podemos obtener es ver el porcentaje de vuelos retrasados según el aeropuerto del que despegan:
+
+
+
+```{r,echo=TRUE,eval=TRUE}
+
+sort(table(vuelos_delay$ORIGIN_AIRPORT) / table(vuelos$ORIGIN_AIRPORT) * 100, decreasing = TRUE)
+
+```
+
+
+Vemos como el aeropuerto con mayor porcentaje de vuelos retrasado es el de GST con un 44.15% 
+
+
+Ahora haremos lo mismo pero según el aeropuerto de destino:
+
+
+```{r,echo=TRUE,eval=TRUE}
+
+sort(table(vuelos_delay$DESTINATION_AIRPORT) / table(vuelos$DESTINATION_AIRPORT) * 100, decreasing = TRUE)
+
+```
+
+
+En esta ocasión es el aeropuerto de STC el que presenta un mayor porcentaje con un 36.53%.
+
+Por lo tanto, las conclusiones que podemos sacar de estas últimas gráficas es que para reducir la posibilidad de que nuestro vuelo sufriera un retraso en el año 2015 deberíamos haber evitado volar desde el aeropuerto de GST (Gustavus Airport), que el aeropuerto de destino no fuera el de STC (St. Cloud Regional Airport), que la aerolínea no fuera NK (Spirit Air Lines) y, no volar un jueves de junio.
   
   
 
