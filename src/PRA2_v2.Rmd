@@ -318,20 +318,20 @@ Las lineas que salen de las cajas se conocen como "bigotes" e indican la variabi
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$DEPARTURE_DELAY, main="DEPARTURE_DELAY") 
-table(vuelos_reduc$DEPARTURE_DELAY)
-table(boxplot.stats(vuelos_reduc$DEPARTURE_DELAY)$out)
+head(vuelos_reduc$DEPARTURE_DELAY)
+head(boxplot.stats(vuelos_reduc$DEPARTURE_DELAY)$out)
 ```
   
 En el diagrama de cajas para la variable DEPARTURE_DELAY podemos apreciar como la mayoría de los vuelos no se retrasan y por eso la caja y los bigotes toman valores de 0 (aprox). Por este motivo, todos los retrasos se consideran valores outliers y, dado que el propósito de esta variable es mostrar los retrasos en las salidas, no podemos eliminar estos valores ya que son los que le dan sentido a la variable. Por otro lado, observamos el amplio rango de valores outliers (retrasos) que hay, llegando a superar valores de 1500 minutos, aunque sí que es cierto que la mayoría se concentran entre los valores de <0 a 1000 minutos.
 
-En las tablas podemos observar con más detalle los valores que toma esta variable y, comprobamos la disparidad de los retrasos.
+En las tablas podemos observar con más detalle los cinco primeros valores que toma esta variable y, comprobamos la disparidad de los retrasos.
 
 Los valores negativos nos indican que los vuelos salieron antes de su hora programada en un primer momento.
 
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$SCHEDULED_TIME, main="SCHEDULED_TIME") 
-table(vuelos_reduc$SCHEDULED_TIME)
+head(vuelos_reduc$SCHEDULED_TIME)
 ```
   
 En el caso de la variable SCHEDULED_TIME (tiempo programado de vuelo) sí podemos apreciar mejor la caja y los bigotes del diagrama.
@@ -342,7 +342,7 @@ En las tablas vemos con más detalles sus valores.
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$AIR_TIME, main="AIR_TIME") 
-table(vuelos_reduc$AIR_TIME)
+head(vuelos_reduc$AIR_TIME)
 ```
   
 Para la vairable AIR_TIME (tiempo desde el despegue hasta el aterrizaje) vemos que la mayoría de vuelos duran entre 50 y 150 minutos aproximadamente, llegando el extremo superior a prácticamente 300 minutos. A partir de este valor nos encontramos con los datos extremos llegando hasta prácticamente los 700 minutos en su valor máximo.
@@ -351,14 +351,14 @@ En la tabla vemos de manera más detallada la información de dicha variable.
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$DISTANCE, main="DISTANCE") 
-table(boxplot.stats(vuelos_reduc$DISTANCE)$out)
+head(boxplot.stats(vuelos_reduc$DISTANCE)$out)
 ```
   
 Para la varialbe DISTANCE (distancia en millas) observamos que la mayor parte de los vuelos transcurren en distancias de hasta 1000 millas aproximadamente, llegando el extremo superior a las 2000 millas aproximadamente. A partir de las 2000 millas nos encontramos los valores outliers, concentrandose la mayor parte de ellos hasta las 3000 millas. Vuelos de entre 3000 millas hasta 5000 millas nos encontramos muy pocos como observamos tanto en el diagrama como en la tabla. 
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$ARRIVAL_DELAY, main="ARRIVAL_DELAY") 
-table(vuelos_reduc$ARRIVAL_DELAY)
+head(vuelos_reduc$ARRIVAL_DELAY)
 ```
   
 Como era de esperar, el análisis de la variable ARRIVAL_DELAY (diferencia en minutos entre la llegada programada y la real) es muy similar al que vimos en la primera variable analizada (DEPARTURE_DELAY). 
@@ -915,8 +915,6 @@ vuelos_reduc %>%
   geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
 
 ```
-  
-Vemos que la aerolínea que más retrasos en la salida tuvo fue la que corresponde a las siglas AA (American Airlines Inc.). También podemos comprobar que la diferencia entre la primera aeorlínea con la segunda es de más del doble, por lo que durante el año 2015 hubo  mayor probabilidad de sufrir retrasos al volar con American Airlines que con cualquier otra aerolínea.  
 
 ```{r,echo=TRUE,eval=TRUE}
 vuelos_reduc %>% 
@@ -976,6 +974,16 @@ vuelos_delay <- vuelos[-indice,]
 dim(vuelos_delay)
 ```
 
+Lo que vamos a hacer ahora es ver los vuelos que no sufren retrasos de nuestro dataset.
+
+```{r,echo=TRUE,eval=TRUE}
+vuelos_no_delay <- vuelos[indice,]
+dim(vuelos_no_delay)
+```
+
+Tenemos 1063439 vuelos que sufrieron retrasos frente a los 4755640 que no sufrieron retrasos, por lo que la probabilidad de que un vuelo se retrasara en el 2015 fue del 18.27%
+
+
 Ahora, mostraremos una gráfica de barras donde podemos ver el porcentaje de retrasos de cada aerolínea:
 
 ```{r,echo=TRUE,eval=TRUE}
@@ -1015,28 +1023,44 @@ table(vuelos_delay$DAY_OF_WEEK) / table(vuelos$DAY_OF_WEEK) * 100
 En esta ocasión obtenemos el resultado esperado: el jueves es el día con mayor % de vuelos retrasados, lo que es lógico al ser el día de la semana con mayor número de vuelos.
 
 
+Lo que vamos a mostrar en la siguiente gráfica son las franjas horarias donde se producen los retrasos:
+
+```{r,echo=TRUE,eval=TRUE}
+barplot(table(vuelos_delay$ARRIVAL_TIME) / table(vuelos$ARRIVAL_TIME) * 100)
+
+```
+
+Vemos que las franjas horarias donde hay mayor porcentaje de retrasos es de 1 a 5 de la madrugada, coincidiendo con el menor número de vuelos. Mientras que cuando menos retrasos se producen es de 7 a 8, que coincide con el mayor número de vuelos. Este resultado es lógico, ya que a mayor volumen de tráfico aéreo, más puntuales deben de ser porque un retraso podría tener efecto cadena, por lo que en las horas puntas debe haber una mayor puntualidad.
+
+
+
 Otro dato curioso que podemos obtener es ver el porcentaje de vuelos retrasados según el aeropuerto del que despegan:
 
 
 
 ```{r,echo=TRUE,eval=TRUE}
-sort(table(vuelos_delay$ORIGIN_AIRPORT) / table(vuelos$ORIGIN_AIRPORT) * 100, decreasing = TRUE)
+t <- sort(table(vuelos_delay$ORIGIN_AIRPORT) / table(vuelos$ORIGIN_AIRPORT) * 100, decreasing = TRUE)
+
+head(t)
 ```
 
 
-Vemos como el aeropuerto con mayor porcentaje de vuelos retrasado es el de GST con un 44.15% 
+Mostramos los 5 valores mayores y vemos como el aeropuerto con mayor porcentaje de vuelos retrasado es el de GST con un 44.15% 
 
 
 Ahora haremos lo mismo pero según el aeropuerto de destino:
 
 
 ```{r,echo=TRUE,eval=TRUE}
-sort(table(vuelos_delay$DESTINATION_AIRPORT) / table(vuelos$DESTINATION_AIRPORT) * 100, decreasing = TRUE)
+t1 <- sort(table(vuelos_delay$DESTINATION_AIRPORT) / table(vuelos$DESTINATION_AIRPORT) * 100, decreasing = TRUE)
+
+head(t1)
 ```
 
 
 En esta ocasión es el aeropuerto de STC el que presenta un mayor porcentaje con un 36.53%.
 
+Por lo tanto, las conclusiones que podemos sacar de estas últimas gráficas es que para reducir la posibilidad de que nuestro vuelo sufriera un retraso en el año 2015 deberíamos haber evitado volar desde el aeropuerto de GST (Gustavus Airport), que el aeropuerto de destino no fuera el de STC (St. Cloud Regional Airport), que la aerolínea no fuera NK (Spirit Air Lines) y, no volar un jueves de junio.  
 
 
 ******   
@@ -1045,9 +1069,23 @@ En esta ocasión es el aeropuerto de STC el que presenta un mayor porcentaje con
 
 **A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?**
 
-  
-Por lo tanto, las conclusiones que podemos sacar de estas últimas gráficas es que para reducir la posibilidad de que nuestro vuelo sufriera un retraso en el año 2015 deberíamos haber evitado volar desde el aeropuerto de GST (Gustavus Airport), que el aeropuerto de destino no fuera el de STC (St. Cloud Regional Airport), que la aerolínea no fuera NK (Spirit Air Lines) y, no volar un jueves de junio.  
 
+Aunque durante el desarrollo de la práctica hemos ido analizando los resultados obtenidos, en este apartado vamos a responder a una serie de preguntas a modo resumen:
+- ¿Son más los vuelos retrasados que los que llegan en hora? ¿Probabilidades?
+  Los vuelos retrasados en el 2015 fueron 1063439, frente a los 4755640 que llegaron a su hora, por lo que la probabilidad de que un vuelo se retrasara es del 18.27%
+  
+- ¿Qué aeropuerto evitar?
+  El aeropuerto que debemos evitar a la hora de coger un vuelo es el de GST (Gustavus Airport), mientras que el aeropuerto de llegada a evitar es el STC (St. Cloud Regional Airport).
+
+- ¿Qué aerolínea evitar?
+  La aerolínea NK (Spirit Air Lines) es la que mayor porcentaje de vuelos retrasados presenta.
+  
+- ¿Qué meses, días, horas son los mejores y los peores para viajar para evitar retrasos?
+  El peor mes es junio, mientras que el mejor es octubre
+  El peor día es el jueves, mientras que el mejor es el sábado
+  Las peores horas son de 1 a 5 de la madrugada, mientras que las mejores son de 7 a 8 de la mañana.
+  
+- ¿Es más fácil tener retrasos en vuelos cortos o en vuelos largos?
 
 
 ******   
