@@ -3,6 +3,10 @@ title: "Práctica 2: Limpieza y análisis de datos"
 author: "Cristina Merino García de la Reina, Isabel González Valle"
 date: '`r format(Sys.Date(),"%e de %B, %Y")`'
 output:
+  pdf_document:
+    highlight: zenburn
+    toc: yes
+  word_document: default
   html_document:
     highlight: default
     number_sections: yes
@@ -14,10 +18,6 @@ output:
       smooth_scroll: true
     includes:
       in_header: PEC2-header.html
-  word_document: default
-  pdf_document:
-    highlight: zenburn
-    toc: yes
 ---
 ---
 
@@ -73,38 +73,39 @@ Poder conocer y tener una referencia del motivo de los vuelos cancelados o retra
 El tipo de licencia de este dataset es: *CC0 1.0 Universal (CC0 1.0) Public Domain Dedication* . Por lo tanto es público y puede ser utilizado libremente para el trabajo que vamos a realizar.  
 El conjunto de datos elegido contiene 31 variables y casi 6 millones de observaciones, por lo que de cara a la práctica reduciremos la cantidad de datos, intentando que la muestra a utilizar represente el conjunto de datos original lo más fielmente posible, para ello utilizaremos las técnicas de muestreo que se estudiaron en el módulo anterior.  
 Del mismo modo, eliminaremos aquellas variables que no aporten valor al estudio que vamos a realizar, reduciendo así la dimensionalidad del conjunto de datos.  
-En cuanto a las variables del dataset, se tienen las siguientes:  
-  *YEAR: Año del vuelo (2015)  
-  *MONTH: Mes del vuelo  
-  *DAY: Día del vuelo  
-  *DAY_OF_WEEK: Día de la semana, donde el día 1=lunes y el 7=Domingo  
-  *AIRLINE: Código de la aerolínea  
-  *FLIGHT_NUMBER: Número de vuelo  
-  *TAIL_NUMBER: Número de identificación de la aeronave  
-  *ORIGIN_AIRPORT: Aeropuerto Origen  
-  *DESTINATION_AIRPORT: Aeropuerto Destino  
-  *SCHEDULED_DEPARTURE: Hora programada de salida en formato hhmm (55 -> 00:55)  
-  *DEPARTURE_TIME: Hora de salida del vuelo en formato hhmm  
-  *DEPARTURE_DELAY: Diferencia en minutos entre la salida programada y la real ( valores negativos identifican salidas del vuelo con antelaión)  
-  *TAXI_OUT: Tiempo de rodaje del avión desde que deja la puerta de embarque hasta despegue.  
-  *WHEELS_OFF: Hora en la que el avión despega, momento en el que las ruedas del avión dejan de tocar el suelo  
-  *SCHEDULED_TIME: Tiempo programado de vuelo.  
-  *ELAPSED_TIME: Tiempo total de vuelo contado desde el momento que el avión se pone en marcha hasta que para completamente en destino, es decir contando el rodaje en el aeropuerto.  
-  *AIR_TIME: Tiempo desde despegue hasta aterrizaje  
-  *DISTANCE: Distancia en millas  
-  *WHEELS_ON: Hora en la que el avión toca tierra.  
-  *TAXI_IN: Tiempo de rodaje en el aeropuerto destino hasta que el avión para completamente.  
-  *SCHEDULED_ARRIVAL: Hora programada de llegada en formato hhmm  
-  *ARRIVAL_TIME: Hora de llegada real en formato hhmm    
-  *ARRIVAL_DELAY: Diferencia en minutos entre la salida programada y la real  
-  *DIVERTED: Vuelo desviado (0-No, 1-Sí)
-  *CANCELLED: Vuelo Cancelado (0-No, 1-Sí)
-  *CANCELLATION_REASON: Motivo de cancelación (A-Carrier, B-Weather, C-National Air System, D-Security)
-  *AIR_SYSTEM_DELAY: Tiempo de retraso por el motivo indicado  
-  *SECURITY_DELAY: Tiempo de retraso por el motivo indicado  
-  *AIRLINE_DELAY: Tiempo de retraso por el motivo indicado  
-  *LATE_AIRCRAFT_DELAY: Tiempo de retraso por el motivo indicado  
-  *WEATHER_DELAY: Tiempo de retraso por el motivo indicado    
+Las variables que componen este dataset, son las siguientes:  
+
+* YEAR: Año del vuelo (2015)  
+* MONTH: Mes del vuelo  
+* DAY: Día del vuelo  
+* DAY_OF_WEEK: Día de la semana, donde el día 1=lunes y el 7=Domingo  
+* AIRLINE: Código de la aerolínea  
+* FLIGHT_NUMBER: Número de vuelo  
+* TAIL_NUMBER: Número de identificación de la aeronave  
+* ORIGIN_AIRPORT: Aeropuerto Origen  
+* DESTINATION_AIRPORT: Aeropuerto Destino  
+* SCHEDULED_DEPARTURE: Hora programada de salida en formato hhmm (55 -> 00:55)  
+* DEPARTURE_TIME: Hora de salida del vuelo en formato hhmm  
+* DEPARTURE_DELAY: Diferencia en minutos entre la salida programada y la real ( valores negativos identifican salidas del vuelo con antelaión)  
+* TAXI_OUT: Tiempo de rodaje del avión desde que deja la puerta de embarque hasta despegue.  
+* WHEELS_OFF: Hora en la que el avión despega, momento en el que las ruedas del avión dejan de tocar el suelo  
+* SCHEDULED_TIME: Tiempo programado de vuelo.  
+* ELAPSED_TIME: Tiempo total de vuelo contado desde el momento que el avión se pone en marcha hasta que para completamente en destino, es decir contando el rodaje en el aeropuerto.  
+* AIR_TIME: Tiempo desde despegue hasta aterrizaje  
+* DISTANCE: Distancia en millas  
+* WHEELS_ON: Hora en la que el avión toca tierra.  
+* TAXI_IN: Tiempo de rodaje en el aeropuerto destino hasta que el avión para completamente.  
+* SCHEDULED_ARRIVAL: Hora programada de llegada en formato hhmm  
+* ARRIVAL_TIME: Hora de llegada real en formato hhmm    
+* ARRIVAL_DELAY: Diferencia en minutos entre la salida programada y la real  
+* DIVERTED: Vuelo desviado (0-No, 1-Sí)
+* CANCELLED: Vuelo Cancelado (0-No, 1-Sí)
+* CANCELLATION_REASON: Motivo de cancelación (A-Carrier, B-Weather, C-National Air System, D-Security)
+* AIR_SYSTEM_DELAY: Tiempo de retraso por el motivo indicado  
+* SECURITY_DELAY: Tiempo de retraso por el motivo indicado  
+* AIRLINE_DELAY: Tiempo de retraso por el motivo indicado  
+* LATE_AIRCRAFT_DELAY: Tiempo de retraso por el motivo indicado  
+* WEATHER_DELAY: Tiempo de retraso por el motivo indicado    
 
 
 
@@ -117,12 +118,13 @@ head(vuelos)
 
 ```
   
-Este conjunto de datos tiene un tamaño demasiado grande para algunas de las operaciones que necesitamos hacer y por este motivo hemos decidido realizar la práctica con un subconjunto del mismo. En el caso necesario, todos los cálculos se podrían repetir con el conjunto completo.
+Este conjunto de datos tiene un tamaño demasiado grande para algunas de las operaciones que necesitamos realizar y por este motivo hemos decidido realizar la práctica con un subconjunto del mismo. En el caso necesario, todos los cálculos se podrían repetir con el conjunto completo.
 
 ```{r,echo=TRUE,eval=TRUE}
+
 #Reducción de la cantidad
 set.seed(222)
-index <- sample(1:nrow(vuelos), size=0.05*nrow(vuelos))
+index <- sample(1:nrow(vuelos), size=0.07*nrow(vuelos))
 vuelos_reduc <- vuelos[index,]
 str(vuelos_reduc)
 ```
@@ -130,10 +132,11 @@ str(vuelos_reduc)
 Hemos visto los primeros valores que toman las variables del conjunto con los datos reducidos. Ahora veremos un pequeño resumen estadístico de dichas variables.
 
 ```{r,echo=TRUE,eval=TRUE}
+
 summary(vuelos_reduc)
 ```
   
-Nuestro conjunto de datos ahora tiene una dimensión de 290953 valores, como podemos apreciar en el siguiente output de R:
+Nuestro conjunto de datos ahora tiene una dimensión de 407335 valores, como podemos apreciar en el siguiente output de R:
 
 ```{r,echo=TRUE,eval=TRUE}
 length(vuelos_reduc$YEAR)
@@ -178,7 +181,7 @@ A continuación, lo que haremos será mostrar un gráfico de barras donde veremo
 
 ```{r}
 popular_airports <- sort(table(flight_airports$ORIGIN_CODE), decreasing = TRUE )
-barplot(popular_airports[1:10], col = "blue", ylim = c(0,20000))
+barplot(popular_airports[1:10], col = "blue", ylim = c(0,40000))
 ```
   
 También vemos que el jueves es el día de la semana con mayor número de vuelos. Al igual que antes, estamos trabajando con el conjunto de datos reducido, por lo que la información mostrada nos ayuda a ver el día de la semana con mayor número de vuelos pero el número que obtenemos no representa al total del año 2015, si no a nuestra muestra reducida.  
@@ -318,8 +321,8 @@ Las lineas que salen de las cajas se conocen como "bigotes" e indican la variabi
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$DEPARTURE_DELAY, main="DEPARTURE_DELAY") 
-head(vuelos_reduc$DEPARTURE_DELAY)
-head(boxplot.stats(vuelos_reduc$DEPARTURE_DELAY)$out)
+table(vuelos_reduc$DEPARTURE_DELAY [1:200])
+head(table(boxplot.stats(vuelos_reduc$DEPARTURE_DELAY)$out))
 ```
   
 En el diagrama de cajas para la variable DEPARTURE_DELAY podemos apreciar como la mayoría de los vuelos no se retrasan y por eso la caja y los bigotes toman valores de 0 (aprox). Por este motivo, todos los retrasos se consideran valores outliers y, dado que el propósito de esta variable es mostrar los retrasos en las salidas, no podemos eliminar estos valores ya que son los que le dan sentido a la variable. Por otro lado, observamos el amplio rango de valores outliers (retrasos) que hay, llegando a superar valores de 1500 minutos, aunque sí que es cierto que la mayoría se concentran entre los valores de <0 a 1000 minutos.
@@ -331,7 +334,7 @@ Los valores negativos nos indican que los vuelos salieron antes de su hora progr
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$SCHEDULED_TIME, main="SCHEDULED_TIME") 
-head(vuelos_reduc$SCHEDULED_TIME)
+head(table(vuelos_reduc$SCHEDULED_TIME))
 ```
   
 En el caso de la variable SCHEDULED_TIME (tiempo programado de vuelo) sí podemos apreciar mejor la caja y los bigotes del diagrama.
@@ -342,7 +345,7 @@ En las tablas vemos con más detalles sus valores.
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$AIR_TIME, main="AIR_TIME") 
-head(vuelos_reduc$AIR_TIME)
+head(table(boxplot.stats(vuelos_reduc$AIR_TIME)$out))
 ```
   
 Para la vairable AIR_TIME (tiempo desde el despegue hasta el aterrizaje) vemos que la mayoría de vuelos duran entre 50 y 150 minutos aproximadamente, llegando el extremo superior a prácticamente 300 minutos. A partir de este valor nos encontramos con los datos extremos llegando hasta prácticamente los 700 minutos en su valor máximo.
@@ -351,14 +354,14 @@ En la tabla vemos de manera más detallada la información de dicha variable.
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$DISTANCE, main="DISTANCE") 
-head(boxplot.stats(vuelos_reduc$DISTANCE)$out)
+head(table(boxplot.stats(vuelos_reduc$DISTANCE)$out))
 ```
   
 Para la varialbe DISTANCE (distancia en millas) observamos que la mayor parte de los vuelos transcurren en distancias de hasta 1000 millas aproximadamente, llegando el extremo superior a las 2000 millas aproximadamente. A partir de las 2000 millas nos encontramos los valores outliers, concentrandose la mayor parte de ellos hasta las 3000 millas. Vuelos de entre 3000 millas hasta 5000 millas nos encontramos muy pocos como observamos tanto en el diagrama como en la tabla. 
 
 ```{r,echo=TRUE,eval=TRUE}
 boxplot(vuelos_reduc$ARRIVAL_DELAY, main="ARRIVAL_DELAY") 
-head(vuelos_reduc$ARRIVAL_DELAY)
+head(table(vuelos_reduc$ARRIVAL_DELAY))
 ```
   
 Como era de esperar, el análisis de la variable ARRIVAL_DELAY (diferencia en minutos entre la llegada programada y la real) es muy similar al que vimos en la primera variable analizada (DEPARTURE_DELAY). 
@@ -449,9 +452,9 @@ qqline(vuelos_reduc$RETRASO_TOTAL, col = "steelblue", lwd = 2)
 boxplot(vuelos_reduc$RETRASO_TOTAL, horizontal=T)
 ```
   
-Contrastamos el gráfico Q-QPlot contra el gráfico de cajas, para ver el comportamiento. En el gráfico de arriba, podemos ver que los valores de la variable no se pegan a la recta, de hecho, se levanta hacia la parte de la derecha despegándose de la recta y solo unos cuantos valores centrales se tienen alrededor de la recta. Esto nos está identificando que esta variable tiene una gran cantidad de valores extremos que hacen que tengamos que preguntarnos si la variable sigue una distribución normal.
+Contrastamos el gráfico Q-QPlot contra el gráfico de cajas, para ver el comportamiento. En el gráfico de arriba, podemos ver que los valores de la variable no se pegan a la recta, de hecho, se levanta hacia la parte de la derecha despegándose de la recta y solo unos cuantos valores centrales se tienen alrededor de la recta. Esto nos está identificando que esta variable tiene una gran cantidad de valores extremos que hacen que tengamos que se genere esa cola a la derecha que se separa de la línea. La dispersión de valores pone en duda ldistribución normal de la variable.
   
-Como no tenemos seguridad de si la población que estamos estudiando sigue una distribución normal, utilizaremos el test de Levene para comprobar la homogeneidad de la varianza u homocedasticidad. Compararemos nuestra variable con la variable DAY_OF_WEEK (realizamos una agrupación de los datos por día de la semana). Tomaremos como hipótesis nula la semajanza de variables y como hipótesis alternativa la no igualdad en la varianza de las varibales con un índice de significación ${\alpha}$=0.05
+Como no tenemos seguridad de si la población que estamos estudiando sigue una distribución normal, para comprobar la homogeneidad de las varianzas  u homocedasticidad, utilizaremos el test de Levene. Compararemos nuestra variable con la variable DAY_OF_WEEK (realizamos una agrupación de los datos por día de la semana). Tomaremos como hipótesis nula la semajanza de variables y como hipótesis alternativa la no igualdad en la varianza de las varibales con un índice de significación ${\alpha}$=0.05
 ```{r,echo=TRUE,eval=TRUE}
 str(vuelos_reduc)
 
@@ -464,7 +467,7 @@ Según el gráfico parece que podemos tener homogeneidad en las varianzas
 LeveneTest(RETRASO_TOTAL ~ as.factor(DAY_OF_WEEK), vuelos_reduc, center=median)
 ```
   
-El Test de Levene nos da un p-valor de 1.099e-06 que es menor que 0.05 (95% de nivel de significación), con lo que rechazaríamos la hipotesis nula de varianzas iguales.  
+Sin embargo, el Test de Levene nos da un p-valor cercano a 0, menor que 0.05 (95% de nivel de significación), con lo que rechazaríamos la hipotesis nula de varianzas iguales.  
 
 Comprobamos con el test de Filgner-Killeen, que habitualmente se utiliza si desconocemos si la distribución es normal o en el caso de que no se tenga una distribución normal de la varible.
 ```{r,echo=TRUE,eval=TRUE}
@@ -512,7 +515,7 @@ No parece que encontremos una mejora de los datos con la transformación de Box-
 
 
 
-<h2><span style="color:blue"> 4.3 Aplicación de pruebas estadísticas</span>></h2>  
+<h2><span style="color:blue"> 4.3 Aplicación de pruebas estadísticas</span></h2>  
 
 **Aplicación de pruebas estadísticas para comparar los grupos de datos. En función de los datos y el objetivo del estudio, aplicar pruebas de contraste de hipótesis, correlaciones, regresiones, etc. Aplicar al menos tres métodos de análisis diferentes.**  
 
@@ -558,36 +561,40 @@ oddsratio(tabla_retraso_dias, verbose = TRUE)
 oddsratio(tabla_retraso_dias, rev="columns", verbose = TRUE)
 ```
   
-El Odds Ratio nos indica que la razón entre la ocurrencia de retraso del vuelo frente a no retraso es 0,93 veces mayor en día laborable y de 1.068 veces superior en fin de semana. Identificamos que no es una diferencia muy pronunciada.  
+El Odds Ratio nos indica que la razón entre la ocurrencia de retraso del vuelo frente a no retraso es 0,94 veces mayor en día laborable y de 1.065 veces superior en fin de semana. Identificamos que no es una diferencia muy pronunciada.  
   
-Realizamos el modelo de regresión lineal simple en el que estudiaremos la relación entre el retraso del vuelo en la llegada junto con la hora establecida 
+Realizamos el modelo de regresión lineal simple en el que estudiaremos la relación entre el retraso del vuelo en la llegada junto con la distancia
 ```{r,echo=TRUE,eval=TRUE}
-ggplot(vuelos_reduc, aes(x=SCHEDULED_ARRIVAL, y=ARRIVAL_DELAY)) +
+ggplot(vuelos_reduc, aes(x=DISTANCE, y=ARRIVAL_DELAY)) +
   geom_point() +
   geom_smooth(method=lm , color="red", se=FALSE)
 
 
-retraso_modelo1 <- lm(ARRIVAL_DELAY~SCHEDULED_ARRIVAL, vuelos_reduc)
+retraso_modelo1 <- lm(ARRIVAL_DELAY~DISTANCE, vuelos_reduc)
 retraso_modelo1 
 summary(retraso_modelo1)
 ```
   
-No conseguimos un buen modelo, seguramente porque no tenemos una dependencia lineal entre los valores.  
+No conseguimos un buen modelo, seguramente porque no tenemos una dependencia estrictamente lineal entre los valores. El gráfico de dispersión no presenta un ajuste de los puntos a la recta, lo que nos indica que no se tiene una fuerte relación lineal entre las variables. Según nos indica el modelo obtenido, la relación, qunque muy débil, es negativa, es decir, parecería que el retraso en la llegada disminuye con la distancia.  
 
-Probamos a incluir en el modelo la variable distancia
+Probamos a incluir en el modelo la variable Scheduled_arrival y posteriormente scheduled_departure, por si podemos mejorar el modelo identificando las horas programadas de salida y de llegada.
 ```{r,echo=TRUE,eval=TRUE}
-
 retraso_modelo2 <- lm(ARRIVAL_DELAY~SCHEDULED_ARRIVAL + DISTANCE, vuelos_reduc)
 retraso_modelo2 
 summary(retraso_modelo2)
+```
+  
+Seguimos sin tener un buen modelo lineal, no tenemos diferencia con el obtenido anteriormente. 
 
+```{r,echo=TRUE,eval=TRUE}
 retraso_modelo3 <- lm(ARRIVAL_DELAY~SCHEDULED_DEPARTURE + DISTANCE + SCHEDULED_ARRIVAL, vuelos_reduc)
 retraso_modelo3 
 summary(retraso_modelo3)
 
-#y=-4.216+0.006x1+0.0013x2+0.003x3
+
 ```
-*Revisar* Estos factores no tienen impacto o no están relacionados con el retraso.
+  
+La bondad del ajuste para este modelo es casi 0, como en el resto de los casos. La proporción de variabilidad que queda explicada por este modelo es mínima, por lo que lo descartamos. 
   
 Modelos de regresión logística:  
 Utilizaremos el dataframe creada anteriormente para incluir las variables en el formato correcto para la regresión. ¿Está el retraso asociado a los vuelos de fin de semana y a la hora de salida?
@@ -597,11 +604,15 @@ retraso$WEEKEND <- ifelse(retraso1$RETRASO=="NO", 0, 1)
 retraso1[1:2] <- lapply(retraso1[1:2], as.factor)
 str(retraso1)
 
-retraso_glm1 <- glm(RETRASO~WEEKEND , data=retraso1, family=binomial(logit))
+retraso_glm1 <- glm(RETRASO~WEEKEND , data=retraso1, family=binomial)
 retraso_glm1
 
 summary(retraso_glm1)
+```
+  
+El modelo nos indica que el retraso en fin de semana es menor que en días laborables, tenemos un valor negativo de la varibale din de semana cuando esta toma el valor "SI" (=1)
 
+```{r,echo=TRUE,eval=TRUE}
 retraso2 <- data.frame(retraso1, DISTANCE=vuelos_reduc$DISTANCE)
 str(retraso2)
 retraso_glm2 <- glm(RETRASO~DEPARTURE_HOUR + DISTANCE, data=retraso2, family=binomial(logit))
@@ -609,7 +620,7 @@ retraso_glm2
 summary(retraso_glm2)
 ```
   
-El modelo anterior no es para nada bueno, no parece que se relacionen, como ya se había visto en el gráfico de correlación. Vamos a intentar crear el modelo teniendo como variables explicativas la distancia y la hora de salida del vuelo por ver si puede haber una posible realción
+El modelo no es muy bueno, hay algunas variables que no aportan mucho al modelo, seguramente porque no tienen datos suficientes. Además, algunas variables no tienen relación entre si, como ya se había visto en el gráfico de correlación (hora de salida, retraso en la llegada). Vamos a intentar crear el modelo teniendo como variables explicativas la distancia y la hora de salida del vuelo por ver si puede haber una posible relación
 
 ```{r,echo=TRUE,eval=TRUE}
 retraso3 <- data.frame(retraso2, MONTH=vuelos_reduc$MONTH,
@@ -645,6 +656,10 @@ retraso$ORIGIN_AIRPORT <- ifelse (retraso4$ORIGIN_AIRPORT %in%
                             retraso4$ORIGIN_AIRPORT,
                             "OTROS")
 str(retraso4)
+```
+  
+Dejamos comentado el código, porque no nos ha sido posible realizar este cálculo con nuestros equipos. 
+```{r,echo=TRUE,eval=TRUE}
 #retraso_glm4 <- glm(RETRASO~DEPARTURE_HOUR + DISTANCE + MONTH + ORIGIN_AIRPORT, data=retraso4,
 #                    family=binomial)
 #retraso_glm4
@@ -652,9 +667,11 @@ str(retraso4)
 
 ```
   
-Vamos a realizar un contraste de hipótesis, nos preguntamos si la proporción de vuelos retrasados es inferior a la de vuelos en los tiempos establecidos.Para ello realizaremos un contraste sobre la proporción para muestras grandes.  
+  
+  
+Vamos a realizar un contraste de hipótesis, nos preguntamos si la proporción de vuelos retrasados es inferior a la de vuelos en los tiempos establecidos.Para ello realizaremos un contraste sobre la proporción para muestras grandes.    
 Consideramos que tenemos una población que toma el valor 1 cuando el vuelo está retrasado y el 0 cuando no lo está. Tenemos por tanto una distribución de Bernoulli con parámetro *p* desconocido.
-$p_0$ será un valor prefijado, en nuestro caso 0.5, es decir el 50% que marcaría la igualdad de proporción de vuelos retrasados y no retrasados. 
+$p_0$ será un valor prefijado, en nuestro caso 0.5, es decir el 50% que marcaría la igualdad de proporción de vuelos retrasados y no retrasados. Nuestra hipótesis alternativa será que la proporción de vuelos retrasados es inferior al 50%. 
 $$
 \left\{
 \begin{array}{ll}
@@ -683,17 +700,15 @@ DELAYED_GROUPED %>% knitr::kable("html")  %>% kable_styling(position='center', f
 n1=DELAYED_GROUPED[1,2]
 n2=DELAYED_GROUPED[2,2]
 
-prop.test(x=c(209810,75840), n=c(285650,285650), p=NULL, alternative="less", correct=TRUE)
+prop.test(x=106107, n=399953, alternative="less", conf.level=0.95, p=0.5)
 
 
 ```
+  
+Con estos datos se obtiene un p-valor muy cercano a 0, es decir menor que el nivel de confianza establecido del 0.05, por lo que podemos concluir que los vuelos retrasados son menos probables que los vuelos en los tiempos establecidos, al contrario de lo que podríamos esperar.
 
 
-
-
-
-*Aplicamos ahora el algoritmo random forest para conocer el aeropuerto que debemos evitar*
-Predecir si un vuelo va a retrasarse en función del mes, día, hora y aeropuerto.  
+Predecir si un vuelo va a retrasarse en función del mes, día, hora y aeropuerto. Vamos a aplicar un modelo Ramdon Forest para intentar dar respuesta a esta pregunta.  
 
 ```{r,echo=TRUE,eval=TRUE}
 str(retraso4)
@@ -749,7 +764,7 @@ grid.arrange(plotbyweekend,plotbydistance,plotbyMeses,plotbySalida,ncol=2)
   
 
   
-Dividimos el conjunto de datos en 2 conjuntos, uno que utilizaremos de entrenamiento y otro para test (70/30)  
+Dividimos el conjunto de datos en 2 conjuntos, uno que utilizaremos de entrenamiento y otro para test (60/40)  
 Como variable de clasificación será "RETRASO" y la incluiremos en el valor de las "y", el resto de atributos se incluirán en el valor de "x"  
 Comprobamos si tenemos que desordenar el data set para seleccionar el conjunto de entrenamiento.  
 ```{r,echo=TRUE,eval=TRUE}
@@ -762,7 +777,7 @@ No se encuentra ordenado por la variable de clasificación, así que no vamos a 
 
 
 set.seed(300)
-indexes = sample(1:nrow(retraso_rf), size=floor((0.7)*nrow(retraso_rf)))
+indexes = sample(1:nrow(retraso_rf), size=floor((0.6)*nrow(retraso_rf)))
 train <- retraso_rf[indexes,]
 test <- retraso_rf[-indexes,]
 
@@ -773,7 +788,7 @@ Creamos el modelo de árbol de decisión
 
 ```{r,echo=TRUE,eval=TRUE}
 #Creamos el modelo
-model <- randomForest(RETRASO ~.,data=train, importance=T, ntree=300, mtry=4)
+model <- randomForest(RETRASO ~.,data=train, importance=T, ntree=150, mtry=4)
 ```
   
 Comprobamos la importancia de las variables en el modelo.
@@ -789,7 +804,7 @@ Vemos a continuación como funciona este modelo, generando hasta 300 posibles á
 print(model)
 ```
   
-Este modelo nos da una tasa de error del 27.87%, esta es la proporción de observaciones que no han sido bien clasificadas por el modelo. Comprobamos que la clasificación de vuelos retrasados no es buena. Comprobamos la matriz de confusión.
+Este modelo nos da una tasa de error del 27.8%, esta es la proporción de observaciones que no han sido bien clasificadas por el modelo. Comprobamos que la clasificación de vuelos retrasados no es buena. Comprobamos la matriz de confusión.
 
 ```{r,echo=TRUE,eval=TRUE}
 
@@ -815,7 +830,7 @@ Realizamos la predicción sobre el resultado de test.
 confusionMatrix(resultado, test$RETRASO)
 ```
   
-Obtenemos un grado de precisión muy similar sobre el conjunto de entrenamiento y sobre el conjunto de test. No es un modelo demasiado bueno, en ambos casos se encuentra alrededor del 70%.  
+Obtenemos un grado de precisión muy similar sobre el conjunto de entrenamiento y sobre el conjunto de test. No es un modelo demasiado bueno, en ambos casos la precisión de predicción del modelo se encuentra alrededor del 70%.  
   
 
 
@@ -843,7 +858,7 @@ Una vez que tenemos el aeropuerto, ahora vamos a ver qué dia de la semana es en
 dias_semana <- sort(table(vuelos_reduc$DAY_OF_WEEK), decreasing=TRUE)
 
 
-barplot(dias_semana, col = "blue", ylim = c(0,50000))
+barplot(dias_semana, col = "blue", ylim = c(0,60000))
 
 ggplot(vuelos_reduc, aes(x=DAY_OF_WEEK, fill=DAY_OF_WEEK )) + 
   geom_bar( ) +
@@ -855,9 +870,7 @@ Se comprueba que el tráfico diario en los días laborables es muy similar, vien
 En el siguiente gráfico, veremos la relación del número de vuelos frente al mes del año:  
 
 ```{r,echo=TRUE,eval=TRUE}
-ggplot(vuelos_reduc, aes(x=MONTH, fill=MONTH )) + 
-  geom_bar( ) +
-  scale_fill_hue(c = 20)
+ggplot(vuelos_reduc,aes(factor(MONTH),fill=RETRASO_TOTAL))+geom_bar() +labs(x="MONTH", y="Número Vuelos")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("RVuelos por meses")
 ```
   
 De este gráfico comprobamos que febrero es el mes que menos vuelos se producen (uno de los factores que pueden influir en este hecho es que es el mes del año más corto).  
@@ -878,7 +891,7 @@ La aerolínea WN, cuyas siglas corresponden a Southwest Airlines Co. operó más
 ```{r,echo=TRUE,eval=TRUE}
 vuelos_reduc %>% 
   filter( RETRASO_TOTAL>0) %>%
-  ggplot(aes(AIRLINE,fill=RETRASO_TOTAL))+geom_bar() +labs(x="ORIGIN_CODE", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Distancias")
+  ggplot(aes(AIRLINE,fill=RETRASO_TOTAL))+geom_bar() +labs(x="ORIGIN_CODE", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Aerolíneas")
 ```   
   
 Si comprobamos el retraso por aerolínea, nos aparece Southwest como la aerolínea con más vuelos retrasados con bastante diferencia.  
@@ -907,7 +920,7 @@ Por otro lado, las horas de llegadas más populares fueron de 9 de la mañana a 
 
 hist(vuelos_reduc$ARRIVAL_DELAY,breaks = 1000, xlim = c(-100,150))
 
-#Retraso por aerolínea
+
 #Analizamos los vuelos retrasados cuando el retraso es menor de 200 minutos
 vuelos_reduc %>% 
   filter( DEPARTURE_DELAY<200 & DEPARTURE_DELAY>0) %>%
@@ -915,15 +928,24 @@ vuelos_reduc %>%
   geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
 
 ```
+  
+
 
 ```{r,echo=TRUE,eval=TRUE}
+par(mfrow=c(2,2))
+
 vuelos_reduc %>% 
   filter( RETRASO_TOTAL>0) %>%
-  ggplot( aes(x=AIRLINE)) +
-  geom_density(fill="#99A3A4", color="#99A3A4", alpha=0.9)
+  ggplot(aes(AIRLINE,fill=ARRIVAL_DELAY))+geom_bar() +labs(x="AIRLINE", y="ARRIVAL_DELAY")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Aerolínea/llegada")
+vuelos_reduc %>% 
+  filter( RETRASO_TOTAL>0) %>%
+  ggplot(aes(AIRLINE,fill=DEPARTURE_DELAY))+geom_bar() +labs(x="AIRLINE", y="DEPARTURE_DELAY")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Aerolínea/Salida")
+vuelos_reduc %>% 
+  filter( RETRASO_TOTAL>0) %>%
+  ggplot(aes(AIRLINE,fill=RETRASO_TOTAL))+geom_bar() +labs(x="AIRLINE", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Aerolínea")
 ```
   
-Comprobamos que los resultados entre de los retrasos tanto de llegada como de salida por aerolínea son prácticamente iguales, por lo que American Aerlines fue la que más retrasos tuvo en las llegadas. Por otro lado, es lógico que si un vuelo se retrasa en la salida, se retrase también en la llegada.  
+Comprobamos que los resultados entre los retrasos tanto de llegada como de salida por aerolínea son prácticamente iguales, por lo que Southwest Airlines fue la que más retrasos tuvo en las llegadas. Por otro lado, es lógico que si un vuelo se retrasa en la salida, se retrase también en la llegada.  
 
 ```{r,echo=TRUE,eval=TRUE}
 vuelos_reduc %>% 
@@ -931,7 +953,7 @@ vuelos_reduc %>%
   ggplot(aes(DEPARTURE_HOUR,fill=RETRASO_TOTAL))+geom_bar() +labs(x="DEPARTURE_HOUR", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Hora Salida")
 ```
   
-En cuanto al retraso por hora de salida, podemos identificar que las horas más problemáticas se tienen en la franja entre las 6am y las 7pm, siendo las 6am, las 10am y las 5pm las horas que acumulan mayor retraso.   
+En cuanto al retraso por hora de salida, podemos identificar que las horas más problemáticas se tienen en la franja entre las 6am y las 7pm, siendo las 6am, las 10am y las 5pm las horas que acumulan mayor retraso.En esta gráfica vemos totales, no porcentajes, y es lógico que en las horas de más afluencia haya más vuelos retrasados.   
     
 ```{r,echo=TRUE,eval=TRUE}
 vuelos_reduc %>% 
@@ -939,15 +961,15 @@ vuelos_reduc %>%
   ggplot(aes(DAY_OF_WEEK,fill=RETRASO_TOTAL))+geom_bar() +labs(x="DAY_OF_WEEK", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Día de la Semana")
 ```
   
-Según el gráfico podemos decir que los días donde se concentra el mayor número de retrasos son el jueves y el viernes. Según esto, el mejor día para viajar sería el sábado.  
+Según el gráfico podemos decir que los días donde se concentra el mayor número de retrasos son el jueves y el viernes. Según esto, el mejor día para viajar sería el sábado, también coincidiendo con el día de menos afluencia de vuelos.  
     
 ```{r,echo=TRUE,eval=TRUE}
 vuelos_reduc %>% 
   filter( RETRASO_TOTAL>0) %>%
-  ggplot(aes(MONTH,fill=RETRASO_TOTAL))+geom_bar() +labs(x="MONTH", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Meses")
+  ggplot(aes(factor(MONTH),fill=RETRASO_TOTAL))+geom_bar() +labs(x="MONTH", y="RETRASO_TOTAL")+ guides(fill=guide_legend(title=""))+ scale_fill_manual(values=c("black","#008000"))+ggtitle("Retraso por Meses")
 ```  
   
-Según el gráfico, parece que el mes con más retrasos es enero, algo que no es lo que podríamos esperar en un inicio, tendríamos que hacer un estudio de las causas de los retrasos para poder valorar bien este dato. Los mejores meses para viajar parecen ser los meses de septiembre, octubre y noviembre.  
+Según el gráfico, parece que el mes con más retrasos es enero, algo que no es lo que podríamos esperar en un inicio, tendríamos que hacer un estudio de las causas de los retrasos para poder valorar bien este dato. Los mejores meses para viajar parecen ser los meses de septiembre, octubre y noviembre. Al ver la gráfica en porcentaje, observaremos que la distribución de vuelos retrasados por porcentaje es algo diferente y nos decuelve otros resultados.    
   
 ```{r,echo=TRUE,eval=TRUE}
 vuelos_reduc %>% 
@@ -972,41 +994,42 @@ Comenzaremos obteniendo un conjunto de datos que no contenga datos desconocidos 
 indice <- which(is.na(vuelos$AIR_SYSTEM_DELAY)) #locations of obs with missing values
 vuelos_delay <- vuelos[-indice,]
 dim(vuelos_delay)
-```
 
+```
+  
 Lo que vamos a hacer ahora es ver los vuelos que no sufren retrasos de nuestro dataset.
 
 ```{r,echo=TRUE,eval=TRUE}
 vuelos_no_delay <- vuelos[indice,]
 dim(vuelos_no_delay)
+head(vuelos_no_delay)
 ```
 
 Tenemos 1063439 vuelos que sufrieron retrasos frente a los 4755640 que no sufrieron retrasos, por lo que la probabilidad de que un vuelo se retrasara en el 2015 fue del 18.27%
-
-
+  
 Ahora, mostraremos una gráfica de barras donde podemos ver el porcentaje de retrasos de cada aerolínea:
 
 ```{r,echo=TRUE,eval=TRUE}
-barplot(table(vuelos_delay$AIRLINE) / table(vuelos$AIRLINE) * 100)
+barplot(sort(table(vuelos_delay$AIRLINE) / table(vuelos$AIRLINE) * 100))
+
 ```
 
-Vemos que la que mayor porcentaje de vuelos retrasados tiene es NK. Esta gráfica nos aporta una información más valiosa que la anterior donde veíamos los retrasos totales por compañías, ya que en la anterior obteníamos que la que más retrasos registraba era AA, pero este dato se debía a que es la compañía que más opera en Estados Unidos.
+Vemos que la que mayor porcentaje de vuelos retrasados tiene es NK. Esta gráfica nos aporta una información más valiosa que la anterior donde veíamos los retrasos totales por compañías, ya que en la anterior obteníamos que la que más retrasos registraba era WN, pero este dato se debía a que es la compañía que más opera en Estados Unidos.
 
 
 Los porcentajes exactos los vemos en la siguiente tabla:
 
 ```{r,echo=TRUE,eval=TRUE}
-table(vuelos_delay$AIRLINE) / table(vuelos$AIRLINE) * 100
+sort((table(vuelos_delay$AIRLINE) / table(vuelos$AIRLINE) * 100)) %>% knitr::kable("html")  %>% kable_styling(position='center', font_size=12, fixed_thead=list(enabled=T))
 ```
 
 
-Apreciamos que NK tiene un 29.15 % de vuelos retrasados, frente al 11.29 de HA que es la que menor porcentaje presenta.
-
+Apreciamos que NK tiene un 29.15 % de vuelos retrasados, frente al 11.29 de HA que es la que menor porcentaje presenta.  
 
 Ahora lo que analizaremos será el porcentaje de vuelos retrasados según los meses:
 
 ```{r,echo=TRUE,eval=TRUE}
-barplot(table(vuelos_delay$MONTH) / table(vuelos$MONTH) * 100)
+barplot(sort(table(vuelos_delay$MONTH) / table(vuelos$MONTH) * 100))
 table(vuelos_delay$MONTH) / table(vuelos$MONTH) * 100
 ```
 
@@ -1016,22 +1039,19 @@ Vemos como el mes de junio es el que presenta más retrasos. Un dato curioso que
 Ya que con los meses hemos obtenido resultados que no esperábamos, vamos a ver si con los días de la semana ocurre lo mismo. Recordemos que era el jueves el día de la semana con mayor número de vuelos:
 
 ```{r,echo=TRUE,eval=TRUE}
-barplot(table(vuelos_delay$DAY_OF_WEEK) / table(vuelos$DAY_OF_WEEK) * 100)
+barplot(sort(table(vuelos_delay$DAY_OF_WEEK) / table(vuelos$DAY_OF_WEEK) * 100))
 table(vuelos_delay$DAY_OF_WEEK) / table(vuelos$DAY_OF_WEEK) * 100
 ```
 
-En esta ocasión obtenemos el resultado esperado: el jueves es el día con mayor % de vuelos retrasados, lo que es lógico al ser el día de la semana con mayor número de vuelos.
-
-
+En esta ocasión obtenemos el resultado esperado: el jueves es el día con mayor % de vuelos retrasados, lo que es lógico al ser el día de la semana con mayor número de vuelos.  
+  
 Lo que vamos a mostrar en la siguiente gráfica son las franjas horarias donde se producen los retrasos:
 
 ```{r,echo=TRUE,eval=TRUE}
 barplot(table(vuelos_delay$ARRIVAL_TIME) / table(vuelos$ARRIVAL_TIME) * 100)
-
 ```
 
-Vemos que las franjas horarias donde hay mayor porcentaje de retrasos es de 1 a 5 de la madrugada, coincidiendo con el menor número de vuelos. Mientras que cuando menos retrasos se producen es de 7 a 8, que coincide con el mayor número de vuelos. Este resultado es lógico, ya que a mayor volumen de tráfico aéreo, más puntuales deben de ser porque un retraso podría tener efecto cadena, por lo que en las horas puntas debe haber una mayor puntualidad.
-
+Vemos que las franjas horarias donde llegan un mayor porcentaje de vuelos retrasados es de 1 a 5 de la madrugada, coincidiendo con el menor número de vuelos. Mientras que cuando más retrasos se producen es de 7 a 8, que coincide con el mayor número de vuelos. Este resultado es lógico, ya que a mayor volumen de tráfico aéreo, más puntuales deben de ser porque un retraso podría tener efecto cadena, por lo que en las horas puntas debe haber una mayor puntualidad. 
 
 
 Otro dato curioso que podemos obtener es ver el porcentaje de vuelos retrasados según el aeropuerto del que despegan:
@@ -1043,8 +1063,7 @@ t <- sort(table(vuelos_delay$ORIGIN_AIRPORT) / table(vuelos$ORIGIN_AIRPORT) * 10
 
 head(t)
 ```
-
-
+  
 Mostramos los 5 valores mayores y vemos como el aeropuerto con mayor porcentaje de vuelos retrasado es el de GST con un 44.15% 
 
 
@@ -1058,9 +1077,9 @@ head(t1)
 ```
 
 
-En esta ocasión es el aeropuerto de STC el que presenta un mayor porcentaje con un 36.53%.
-
+En esta ocasión es el aeropuerto de STC el que presenta un mayor porcentaje con un 36.53%.  
 Por lo tanto, las conclusiones que podemos sacar de estas últimas gráficas es que para reducir la posibilidad de que nuestro vuelo sufriera un retraso en el año 2015 deberíamos haber evitado volar desde el aeropuerto de GST (Gustavus Airport), que el aeropuerto de destino no fuera el de STC (St. Cloud Regional Airport), que la aerolínea no fuera NK (Spirit Air Lines) y, no volar un jueves de junio.  
+
 
 
 ******   
@@ -1069,24 +1088,24 @@ Por lo tanto, las conclusiones que podemos sacar de estas últimas gráficas es 
 
 **A partir de los resultados obtenidos, ¿cuáles son las conclusiones? ¿Los resultados permiten responder al problema?**
 
-
+  
 Aunque durante el desarrollo de la práctica hemos ido analizando los resultados obtenidos, en este apartado vamos a responder a una serie de preguntas a modo resumen:
 - ¿Son más los vuelos retrasados que los que llegan en hora? ¿Probabilidades?
-  Los vuelos retrasados en el 2015 fueron 1063439, frente a los 4755640 que llegaron a su hora, por lo que la probabilidad de que un vuelo se retrasara es del 18.27%
-  
+  Al contrario de lo que podríamos pensar, la probabilidad de vuelos retrasados es menor que la de vuelos que llegan a su hora. De hecho, los vuelos retrasados en el 2015 fueron 1063439, frente a los 4755640 que llegaron a su hora, por lo que la probabilidad de que un vuelo se retrasara es del 18.27%  
+
 - ¿Qué aeropuerto evitar?
   El aeropuerto que debemos evitar a la hora de coger un vuelo es el de GST (Gustavus Airport), mientras que el aeropuerto de llegada a evitar es el STC (St. Cloud Regional Airport).
 
 - ¿Qué aerolínea evitar?
   La aerolínea NK (Spirit Air Lines) es la que mayor porcentaje de vuelos retrasados presenta.
-  
+
 - ¿Qué meses, días, horas son los mejores y los peores para viajar para evitar retrasos?
   El peor mes es junio, mientras que el mejor es octubre
-  El peor día es el jueves, mientras que el mejor es el sábado
-  Las peores horas son de 1 a 5 de la madrugada, mientras que las mejores son de 7 a 8 de la mañana.
-  
-- ¿Es más fácil tener retrasos en vuelos cortos o en vuelos largos?
+  El peor día es el jueves, mientras que el mejor es el sábado. A pesar de ese hecho, hemos comprobado que la razón entre la ocurrencia de retraso del vuelo frente a no retraso de 1.068 veces superior en fin de semana.  
+  Las peores horas de llegada del vuelo son de 1 a 5 de la madrugada, mientras que las mejores son de 7 a 8 de la mañana. Es decir los vuelos que llegan muy tarde llegan más retrasados, mientras que los que lo hacen a primera hora parece que no acumulan tanto retraso.
 
+- ¿Es mayor el retraso de los vuelos en distancias largas?  
+Según las gráficas de retraso por distancia, los mayores retrasos se dan en vuelos por debajo de las 1000 millas.   
 
 ******   
 <h1><span style="color:darkblue"> **7. Código**</span></h1>  
@@ -1094,14 +1113,7 @@ Aunque durante el desarrollo de la práctica hemos ido analizando los resultados
 
 **Adjuntar el código con el que se ha realizado la limpieza, análisis y representación de los datos.**
 
-```{r}
-
-
-
-
-
-```
-
+<https://github.com/igonzalezvalle/PRA2---Limpieza-Analisis-Datos/blob/master/src/PRA2-Limpieza-Analisis.R>
 
 
 
@@ -1116,11 +1128,19 @@ Aunque durante el desarrollo de la práctica hemos ido analizando los resultados
   
     
   
-#<span style="color:darkblue"> Referencias: </span>  
+<h3><span style="color:darkblue"> **Referencias:** </span></h3>
 
 <https://rpubs.com>  
 <https://www.kaggle.com/usdot/flight-delays>
+<https://rstudio-pubs-static.s3.amazonaws.com/326515_e25772acbbba47d98052df5520eed1a4.html>
+<https://www.r-graph-gallery.com/>
 
+- Laia Subirats Maté, Diego Oswaldo Pérez Trenard, Mireia Calvo González. (2019). Introducción a la limpieza de datos.
+- Squire, Megan (2015). Clean Data. Packt Publishing Ltd.
+- Jiawei Han, Micheine Kamber, Jian Pei (2012). Data mining: concepts and techniques. Morgan Kaufmann.
+- Jason W. Osborne (2010). Data Cleaning Basics: Best Practices in Dealing with Extreme Scores. Newborn and Infant Nursing Reviews; 10 (1): pp. 1527-3369.
+- Peter Dalgaard (2008). Introductory statistics with R. Springer Science & Business Media.
+Wes McKinney (2012). Python for Data Analysis. O’Reilley Media, Inc.
 
 
 
